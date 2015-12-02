@@ -5,12 +5,10 @@ public class TextBook extends Book
 	
 	private String subject;
 	
-	public TextBook(int id, String author, String publisher,
-			String publicationDate, double retailPrice, int type,
-			String subject)
+	public TextBook(int id, String title, String author, String publisher,
+			String pubDate, double retailPrice, String type, String subject)
 	{
-		super(id, author, publisher, publicationDate, subject, retailPrice,
-				type);
+		super(id, title, author, publisher, pubDate, retailPrice, type);
 		this.subject = subject;
 	}
 

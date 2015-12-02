@@ -4,33 +4,43 @@ import java.io.Serializable;
 
 import rcooper.bookmanager.model.AbstractModelObject;
 
-public abstract class Book extends AbstractModelObject implements Serializable
+public abstract class Book extends AbstractModelObject implements Serializable, Comparable<Book>
 {
 	
-	public static final int FICTIONAL_BOOK = 0;
-	public static final int HISTORY_BOOK = 1;
-	public static final int TEXT_BOOK = 2;
-	protected String title, author, publisher, publicationDate;
+	public static final int FICTIONAL = 0;
+	public static final int HISTORY = 1;
+	public static final int TEXT = 2;
+	protected String type, title, author, publisher, pubDate;
 	protected double retailPrice;
-	protected int id, type;
+	protected int id;
 
 	public Book(int id, String title, String author, String publisher,
-			String publicationDate, double retailPrice, int type)
+			String pubDate, double retailPrice, String type)
 	{
 		this.id = id;
 		this.title = title;
 		this.author = author;
 		this.publisher = publisher;
-		this.publicationDate = publicationDate;
+		this.pubDate = pubDate;
 		this.retailPrice = retailPrice;
 		this.type = type;
 	}
 
 	/* ACCESSORS */
 
+	public String getType()
+	{
+		return type;
+	}
+	
 	public String getTitle()
 	{
 		return title;
+	}
+	
+	public int getId()
+	{
+		return id;
 	}
 
 	public String getAuthor()
@@ -45,17 +55,12 @@ public abstract class Book extends AbstractModelObject implements Serializable
 
 	public String getPublicationDate()
 	{
-		return publicationDate;
+		return pubDate;
 	}
 
 	public double getRetailPrice()
 	{
 		return retailPrice;
-	}
-
-	public int getType()
-	{
-		return type;
 	}
 
 	@Override
@@ -65,7 +70,7 @@ public abstract class Book extends AbstractModelObject implements Serializable
 		sb.append(title + " ");
 		sb.append(author + " ");
 		sb.append(publisher + " ");
-		sb.append(publicationDate + " ");
+		sb.append(pubDate + " ");
 		sb.append(retailPrice + " ");
 		
 		return sb.toString();
@@ -88,9 +93,9 @@ public abstract class Book extends AbstractModelObject implements Serializable
 		this.publisher = publisher;
 	}
 
-	public void setPublicationDate(String publicationDate)
+	public void setPublicationDate(String pubDate)
 	{
-		this.publicationDate = publicationDate;
+		this.pubDate = pubDate;
 	}
 
 	public void setRetailPrice(double retailPrice)
@@ -98,4 +103,9 @@ public abstract class Book extends AbstractModelObject implements Serializable
 		this.retailPrice = retailPrice;
 	}
 
+	@Override
+	public int compareTo(Book otherBook)
+	{
+		return getTitle().compareTo(otherBook.getTitle());
+	}
 }

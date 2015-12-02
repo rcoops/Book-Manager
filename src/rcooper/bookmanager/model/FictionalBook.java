@@ -6,7 +6,7 @@ public class FictionalBook extends Book
 	private String genre;
 	
 	public FictionalBook(int id, String title, String author, String publisher,
-			String pubDate, double retailPrice, int type, String genre)
+			String pubDate, double retailPrice, String type, String genre)
 	{
 		super(id, title, author, publisher, pubDate, retailPrice, type);
 		this.genre = genre;

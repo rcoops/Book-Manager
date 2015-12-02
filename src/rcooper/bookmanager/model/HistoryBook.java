@@ -5,11 +5,10 @@ public class HistoryBook extends Book
 
 	private String period;
 
-	public HistoryBook(int id, String author, String publisher,
-			String publicationDate, double retailPrice, int type, String period)
+	public HistoryBook(int id, String title, String author, String publisher,
+			String pubDate, double retailPrice, String type, String period)
 	{
-		super(id, author, publisher, publicationDate, period, retailPrice,
-				type);
+		super(id, title, author, publisher, pubDate, retailPrice, type);
 		this.period = period;
 	}
 
