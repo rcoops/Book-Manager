@@ -3,13 +3,13 @@ package rcooper.bookmanager.model;
 public class TextBook extends Book
 {
 	
+	private final String INFO = "Subject";
 	private String subject;
 	
-	public TextBook(int id, String title, String author, String publisher,
+	public TextBook(String title, String author, String publisher,
 			String pubDate, double retailPrice, String type, String subject)
 	{
-		super(id, title, author, publisher, pubDate, retailPrice, type);
-		this.subject = subject;
+		super(title, author, publisher, pubDate, retailPrice, type, subject);
 	}
 
 	/* ACCESSORS */

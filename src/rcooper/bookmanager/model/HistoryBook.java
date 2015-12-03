@@ -3,13 +3,13 @@ package rcooper.bookmanager.model;
 public class HistoryBook extends Book
 {
 
+	private final String INFO = "Period";
 	private String period;
 
-	public HistoryBook(int id, String title, String author, String publisher,
+	public HistoryBook(String title, String author, String publisher,
 			String pubDate, double retailPrice, String type, String period)
 	{
-		super(id, title, author, publisher, pubDate, retailPrice, type);
-		this.period = period;
+		super(title, author, publisher, pubDate, retailPrice, type, period);
 	}
 
 	/* ACCESSORS */

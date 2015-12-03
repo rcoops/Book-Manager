@@ -2,31 +2,27 @@ package rcooper.bookmanager.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Library extends AbstractModelObject implements Serializable
 {
-	public static final int FICTIONAL = 0;
-	public static final int HISTORY = 1;
-	public static final int TEXT = 2;
+	
 	private static final long serialVersionUID = 1L;
 	private List<Book> items;
-	private int idCount;
 	
 	public Library()
 	{
-		idCount = 0;
 		items = new ArrayList<Book>();
 	}
 	
-	public List<Book> getItems() 
+	public int getBookCount()
 	{
-		return items;
+		return items.size();
 	}
-	
-	public int getCount()
-	{
-		return idCount;
+
+	public List<Book> getItems() {
+		return items;
 	}
 	
 	public Book getBook(int index)
@@ -36,25 +32,27 @@ public class Library extends AbstractModelObject implements Serializable
 	
 	public void addBook(Book book)
 	{
+		List<Book> oldValue = items;
+		items = new ArrayList<Book>(items);
 		items.add(book);
-		idCount++;
-	}
-	
-	public int getSize()
-	{
-		return items.size();
-	}
-	
-	public boolean isEmpty()
-	{
-		return items.isEmpty();
+		firePropertyChange("items", oldValue, items);
+		firePropertyChange("itemsCount", oldValue.size(), items.size());
 	}
 	
 	public void removeBook(Book book)
 	{
-		if(items.contains(book)) {
-			items.remove(book);
-		}
+		List<Book> oldValue = items;
+		items = new ArrayList<Book>(items);
+		items.remove(book);
+		firePropertyChange("items", oldValue, items);
+		firePropertyChange("itemsCount", oldValue.size(), items.size());
+	}
+
+	public void replaceBooks(List<Book> newItems) {
+		List<Book> oldValue = items;
+		items = newItems;
+		firePropertyChange("items", oldValue, items);
+		firePropertyChange("itemsCount", oldValue.size(), items.size());
 	}
 	
 	public double calculateTotalValue()
@@ -66,6 +64,22 @@ public class Library extends AbstractModelObject implements Serializable
 		}
 		
 		return total;
+	}
+	
+	public void sortAscending()
+	{	
+		List<Book> oldItems = items;
+		items = new ArrayList<Book>( items );
+		Collections.sort( items );
+		firePropertyChange( "items", oldItems, items );
+	}
+	
+	public void sortDescending()
+	{
+		List<Book> oldItems = items;
+		items = new ArrayList<Book>( items );
+		Collections.sort( items, Collections.reverseOrder() );
+		firePropertyChange( "items", oldItems, items );
 	}
 
 }

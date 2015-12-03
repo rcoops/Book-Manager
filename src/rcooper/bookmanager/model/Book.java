@@ -1,33 +1,37 @@
 package rcooper.bookmanager.model;
 
-import java.io.Serializable;
-
-import rcooper.bookmanager.model.AbstractModelObject;
-
-public abstract class Book extends AbstractModelObject implements Serializable, Comparable<Book>
+public abstract class Book extends AbstractModelObject implements Comparable<Book>
 {
 	
-	public static final int FICTIONAL = 0;
-	public static final int HISTORY = 1;
-	public static final int TEXT = 2;
+	protected final String INFO = "";
 	protected String type, title, author, publisher, pubDate;
-	protected double retailPrice;
-	protected int id;
+	protected double price;
+	protected AdditionalInfo info;
 
-	public Book(int id, String title, String author, String publisher,
-			String pubDate, double retailPrice, String type)
+	public Book()
 	{
-		this.id = id;
+		this("", "", "", "", 0, "", "");
+	}
+	
+	public Book(String title, String author, String publisher,
+			String pubDate, double retailPrice, String type, String info)
+	{
 		this.title = title;
 		this.author = author;
 		this.publisher = publisher;
 		this.pubDate = pubDate;
-		this.retailPrice = retailPrice;
+		this.price = retailPrice;
 		this.type = type;
+		this.info = new AdditionalInfo(INFO, "");
 	}
 
 	/* ACCESSORS */
 
+	public AdditionalInfo getInfo()
+	{
+		return info;
+	}
+	
 	public String getType()
 	{
 		return type;
@@ -36,11 +40,6 @@ public abstract class Book extends AbstractModelObject implements Serializable, 
 	public String getTitle()
 	{
 		return title;
-	}
-	
-	public int getId()
-	{
-		return id;
 	}
 
 	public String getAuthor()
@@ -60,7 +59,7 @@ public abstract class Book extends AbstractModelObject implements Serializable, 
 
 	public double getRetailPrice()
 	{
-		return retailPrice;
+		return price;
 	}
 
 	@Override
@@ -71,7 +70,7 @@ public abstract class Book extends AbstractModelObject implements Serializable, 
 		sb.append(author + " ");
 		sb.append(publisher + " ");
 		sb.append(pubDate + " ");
-		sb.append(retailPrice + " ");
+		sb.append(price + " ");
 		
 		return sb.toString();
 	}
@@ -100,7 +99,7 @@ public abstract class Book extends AbstractModelObject implements Serializable, 
 
 	public void setRetailPrice(double retailPrice)
 	{
-		this.retailPrice = retailPrice;
+		this.price = retailPrice;
 	}
 
 	@Override

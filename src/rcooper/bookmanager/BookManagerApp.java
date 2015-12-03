@@ -57,16 +57,15 @@ public class BookManagerApp extends JFrame
 	private JPanel detailsView, reportView, detailsPanel, 
 		controlPanel, filler;
 	private JLabel titleLabel, authorLabel, publisherLabel, pubDateLabel,
-		priceLabel, typeLabel, genreLabel, periodLabel, subjectLabel;
+		priceLabel, typeLabel, infoLabel;
 	private JTextField titleField, authorField, publisherField, pubDateField,
-		priceField, typeField, genreField, periodField, subjectField, 
-		addTitleField, addAuthorField, addPublisherField, addPubDateField,
-		addPriceField, addTypeField, addGenreField, addPeriodField,
-		addSubjectField;
+		priceField, infoField;
+	private JComboBox<String> typeField;
 	private JList<String> list;
-	private JButton addButton, editButton, removeButton;
-	private JDialog addBookDialog;
-	
+	private JButton addButton, editButton, removeButton, saveButton, cancelButton;
+	private List<JComponent> detailsComponents;
+	private List<JButton> buttons;
+	private List<String> types;
 	private Library library;
 	
 	public static void main(String[] args)
@@ -89,13 +88,17 @@ public class BookManagerApp extends JFrame
 	public BookManagerApp()
 	{
 		library = new Library();
+		types = new ArrayList<String>();
+		types.add("Fictional");
+		types.add("History");
+		types.add("Textbook");
 //		public FictionalBook(int id, String title, String author, String publisher,
 //				String pubDate, double retailPrice, int type, String genre)
-		library.addBook(new FictionalBook(library.getCount(), "Soul Music", "Terry Pratchett", "P.W. Books", "20.01.1999", 5.50 , "Fictional", "Fantasy/Comedy"));
-		library.addBook(new FictionalBook(library.getCount(), "The Color of Magic", "Terry Pratchett", "TS Publishing", "09.05.1992", 4.50 , "Fictional", "Fantasy/Comedy"));
-		library.addBook(new FictionalBook(library.getCount(), "The Light Fantastic", "Terry Pratchett", "BooksALot", "12.02.1987", 6.50 , "Fictional", "Fantasy/Comedy"));
-		library.addBook(new TextBook(library.getCount(), "Java For Beginners", "A Dude", "BooksALot", "12.02.1987", 6.50 , "Textbook", "Magic"));
-		library.addBook(new HistoryBook(library.getCount(), "The History of Design Patterns", "Some O. Dude", "BooksALot", "12.02.1987", 6.50 , "History", "20th Century"));
+		library.addBook(new FictionalBook("Soul Music", "Terry Pratchett", "P.W. Books", "20.01.1999", 5.50 , "Fictional", "Fantasy/Comedy"));
+		library.addBook(new FictionalBook("The Color of Magic", "Terry Pratchett", "TS Publishing", "09.05.1992", 4.50 , "Fictional", "Fantasy/Comedy"));
+		library.addBook(new FictionalBook("The Light Fantastic", "Terry Pratchett", "BooksALot", "12.02.1987", 6.50 , "Fictional", "Fantasy/Comedy"));
+		library.addBook(new TextBook("Java For Beginners", "A Dude", "BooksALot", "12.02.1987", 6.50 , "Textbook", "Magic"));
+		library.addBook(new HistoryBook("The History of Design Patterns", "Some O. Dude", "BooksALot", "12.02.1987", 6.50 , "History", "20th Century"));
 		//// Frame menu bar ////
 		menuBar = new JMenuBar();
 		
@@ -134,24 +137,24 @@ public class BookManagerApp extends JFrame
 		publisherLabel = new JLabel("Publisher:");
 		pubDateLabel = new JLabel("Publication Date:");
 		priceLabel = new JLabel("Retail Price:");
-		genreLabel = new JLabel("Genre:");
-		periodLabel = new JLabel("Period:");
-		subjectLabel = new JLabel("Subject:");
-		typeField = new JTextField();
+		infoLabel = new JLabel();
+		typeField = new JComboBox<String>();
 		titleField = new JTextField();
 		authorField = new JTextField();
 		publisherField = new JTextField();
 		pubDateField = new JTextField();
 		priceField = new JTextField();
-		genreField = new JTextField();
-		periodField = new JTextField();
-		subjectField = new JTextField();
+		infoField = new JTextField();
 		filler = new JPanel();
+		detailsComponents = new ArrayList<JComponent>();
 		
 		//// buttonPanel children ////
 		addButton = new JButton("Add");
 		editButton = new JButton("Edit");
 		removeButton = new JButton("Remove");
+		saveButton = new JButton("Save");
+		cancelButton = new JButton("Cancel");
+		buttons = new ArrayList<JButton>();
 		
 		//// Set Up Elements ////
 		setFrameProperties(); // app
@@ -225,7 +228,7 @@ public class BookManagerApp extends JFrame
 		detailsView.add(controlPanel, gbc);
 		
 		//// app.tabbedPane.detailsView.listPane setup ////
-		listPane.setViewportView( list );
+		setListProperties();
 		
 		//// app.tabbedPane.detailsView.detailsPanel setup ////
 		
@@ -238,7 +241,7 @@ public class BookManagerApp extends JFrame
 		
 		// Set bulk properties for text containers
 		Component[] components = detailsPanel.getComponents();
-		ArrayList<JComponent> detailsComponents = new ArrayList<JComponent>();
+		buttons = new ArrayList<JButton>();
 		for(Component component : components) {
 			detailsComponents.add((JComponent) component);
 		}
@@ -249,7 +252,16 @@ public class BookManagerApp extends JFrame
 					JTextField textComp = (JTextField) component;
 					textComp.setEditable(false);
 				}
+				if(component instanceof JComboBox) {
+					JComboBox<String> comboBox = (JComboBox<String>) component;
+					comboBox.setEnabled(false);
+				}
 			}
+		}
+		
+		components = controlPanel.getComponents();
+		for(Component component : components) {
+			buttons.add((JButton) component);
 		}
 		
 		//// app.tabbedPane.detailsView.controlPanel setup ////
@@ -259,7 +271,7 @@ public class BookManagerApp extends JFrame
 	private void addDetailLabels()
 	{
 		JLabel[] leftLabels = {titleLabel, authorLabel, publisherLabel,
-				genreLabel, subjectLabel};
+				infoLabel, subjectLabel};
 		JLabel[] rightLabels = {typeLabel, priceLabel, null, pubDateLabel, 
 				periodLabel};
 
@@ -342,6 +354,7 @@ public class BookManagerApp extends JFrame
 				addBook();
 			}
 		});
+		
 		editButton.setMargin(buttonInsets);
 		editButton.addActionListener(new ActionListener()
 		{
@@ -356,13 +369,31 @@ public class BookManagerApp extends JFrame
 		{
 			public void actionPerformed(ActionEvent e)
 			{
-				
 				removeBook();
+			}
+		});
+		
+		saveButton.setMargin(buttonInsets);
+		saveButton.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				
+			}
+		});
+		cancelButton.setMargin(buttonInsets);
+		cancelButton.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				
 			}
 		});
 		
 		editButton.setEnabled(false);
 		removeButton.setEnabled(false);
+		saveButton.setVisible(false);
+		cancelButton.setVisible(false);
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.weightx = 0.3;
 		controlPanel.add(addButton, gbc);
@@ -372,7 +403,17 @@ public class BookManagerApp extends JFrame
 		gbc = (GridBagConstraints) gbc.clone();
 		gbc.gridx = 2;
 		controlPanel.add(removeButton, gbc);
+		gbc = new GridBagConstraints();
+		controlPanel.add(saveButton, gbc);
+		gbc = new GridBagConstraints();
+		gbc.gridx = GridBagConstraints.RELATIVE;
+		controlPanel.add(cancelButton, gbc);
+	}
 	
+	private void setListProperties()
+	{
+		listPane.setViewportView( list );
+		
 		list.getSelectionModel().addListSelectionListener(
 				new ListSelectionListener()
 		{
@@ -380,44 +421,39 @@ public class BookManagerApp extends JFrame
 			@Override
 			public void valueChanged(ListSelectionEvent e)
 			{
-				String bookType = "";
-				
-				editButton.setEnabled(true);
-				removeButton.setEnabled(true);
-				
-				try {
-					bookType = getSelectedBook().getType(); 
-				} catch(NullPointerException npe) {}
-				
-				if(!bookType.equals("Fictional")) {
-					genreField.setText("N/A");
-					genreField.setEnabled(false);
+				if(list.getSelectedIndex() == -1) {
+					for(JComponent component : detailsComponents) {
+						if( component instanceof JTextField) {
+							JTextField textField = (JTextField) component;
+							textField.setText("");
+						}
+					}
 				} else {
-					genreField.setEnabled(true);
-				}
-				if(!bookType.equals("Textbook")) {
-					subjectField.setText("N/A");
-					subjectField.setEnabled(false);
-				} else {
-					subjectField.setEnabled(true);
-				}
-				if(!bookType.equals("History")) {
-					periodField.setText("N/A");
-					periodField.setEnabled(false);
-				} else {
-					periodField.setEnabled(true);
+					Book book = library.getItems().get(list.getSelectedIndex());
+					String bookType = book.getType();
+					editButton.setEnabled(true);
+					removeButton.setEnabled(true);
+					if(!bookType.equals("Fictional")) {
+						genreField.setText("N/A");
+						genreField.setEnabled(false);
+					} else {
+						genreField.setEnabled(true);
+					}
+					if(!bookType.equals("Textbook")) {
+						subjectField.setText("N/A");
+						subjectField.setEnabled(false);
+					} else {
+						subjectField.setEnabled(true);
+					}
+					if(!bookType.equals("History")) {
+						periodField.setText("N/A");
+						periodField.setEnabled(false);
+					} else {
+						periodField.setEnabled(true);
+					}
 				}
 			}
 		});
-	}
-	
-	private Book getSelectedBook()
-	{
-		Book book = null;
-		if( list.getSelectedIndex() != -1) {
-			book = library.getBook(list.getSelectedIndex());
-		}
-		return book;
 	}
 	
 	private void showAbout()
@@ -426,150 +462,38 @@ public class BookManagerApp extends JFrame
 	}
 	
 	private void addBook()
-	
 	{
-		addBookDialog = new JDialog();
-		addBookDialog.setTitle("Add Book");
-		addBookDialog.setSize(640, 480);
-		addBookDialog.setLocationRelativeTo(this);
-		addBookDialog.getContentPane().setLayout(new GridBagLayout());
-		addBookDialog.setVisible(true);
-		
-		JLabel typeLabel = new JLabel("Type:");
-		JLabel titleLabel = new JLabel("Title:");
-		JLabel authorLabel = new JLabel("Author:");
-		JLabel publisherLabel = new JLabel("Publisher:");
-		JLabel pubDateLabel = new JLabel("Publication Date:");
-		JLabel priceLabel = new JLabel("Retail Price:");
-		JLabel genreLabel = new JLabel("Genre:");
-		JLabel periodLabel = new JLabel("Period:");
-		JLabel subjectLabel = new JLabel("Subject:");
-		JComboBox typeField = new JComboBox<String>();
-		addTitleField = new JTextField();
-		addAuthorField = new JTextField();
-		addPublisherField = new JTextField();
-		addPubDateField = new JTextField();
-		addPriceField = new JTextField();
-		addGenreField = new JTextField();
-		addPeriodField = new JTextField();
-		addSubjectField = new JTextField();
-		JPanel filler = new JPanel();
-		
-		//// app.tabbedPane.detailsView.setup ////
-		JLabel[] leftLabels = {titleLabel, authorLabel, publisherLabel,
-				genreLabel, subjectLabel};
-		JLabel[] rightLabels = {typeLabel, priceLabel, null, pubDateLabel, 
-				periodLabel};
-		
-		// Left labels
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.weightx = 1;
-		gbc.weighty = 1;
-		gbc.anchor = GridBagConstraints.LINE_END;
-		
-		for(int i = 0; i < 5; i++) {
-			gbc.gridy = i;
-			getContentPane().add(leftLabels[i], gbc);
-		}
-		
-		// Right labels
-		gbc.gridx = 2;
-		for(int i = 0; i < 5; i++) {
-			if(i != 2) {
-				gbc.gridy = i;
-				getContentPane().add(rightLabels[i], gbc);
-			}
-		}
-		
-		// Right fields
-		gbc = new GridBagConstraints();
-		gbc.anchor = GridBagConstraints.LINE_START;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 3;
-		gbc.weightx = 2;
-		gbc.weighty = 1;
-		getContentPane().add(typeField, gbc);
-		gbc = new GridBagConstraints();
-		gbc.anchor = GridBagConstraints.LINE_START;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 3;
-		gbc.gridy = 1;
-		gbc.weightx = 2;
-		gbc.weighty = 1;
-		getContentPane().add(priceField, gbc);
-		gbc = new GridBagConstraints();
-		gbc.anchor = GridBagConstraints.LINE_START;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 3;
-		gbc.gridy = 3;
-		gbc.weightx = 2;
-		gbc.weighty = 1;
-		getContentPane().add(pubDateField, gbc);
-		gbc = new GridBagConstraints();
-		gbc.anchor = GridBagConstraints.LINE_START;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 3;
-		gbc.gridy = 4;
-		gbc.weightx = 2;
-		gbc.weighty = 1;
-		getContentPane().add(periodField, gbc);
-		
-		// Left fields
-		gbc = new GridBagConstraints();
-		gbc.anchor = GridBagConstraints.LINE_START;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 1;
-		gbc.weightx = 4;
-		gbc.gridy = 0;
-		getContentPane().add(titleField, gbc);
-		gbc = new GridBagConstraints();
-		gbc.anchor = GridBagConstraints.LINE_START;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 1;
-		gbc.gridy = 1;
-		gbc.weightx = 4;
-		getContentPane().add(authorField, gbc);
-		gbc = new GridBagConstraints();
-		gbc.anchor = GridBagConstraints.LINE_START;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 1;
-		gbc.weightx = 4;
-		gbc.gridy = 2;
-		getContentPane().add(publisherField, gbc);
-		gbc = new GridBagConstraints();
-		gbc.anchor = GridBagConstraints.LINE_START;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 1;
-		gbc.weightx = 4;
-		gbc.gridy = 3;
-		getContentPane().add(genreField, gbc);
-		gbc = new GridBagConstraints();
-		gbc.anchor = GridBagConstraints.LINE_START;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 1;
-		gbc.gridy = 4;
-		gbc.weightx = 4;
-		getContentPane().add(subjectField, gbc);
-		
-		// Filler
-		gbc = new GridBagConstraints();
-		gbc.gridx=5;
-		gbc.gridy=0;
-		gbc.weightx = 1;
-		gbc.gridheight = 5;
-		getContentPane().add(filler, gbc);
+		Book book = new FictionalBook();
+		AddEditBookDialog dialog = new AddEditBookDialog(types, book);
+		library.addBook(new FictionalBook());
+		list.repaint();
 	}
 	
 	private void editBook()
 	{
-		
+		for(JComponent component : detailsComponents) {
+			if( component instanceof JTextField) {
+				JTextField textField = (JTextField) component;
+				textField.setEditable(true);
+			}
+		}
 	}
 	
 	private void removeBook()
 	{
-		library.removeBook(getSelectedBook());
+		Object[] options = {"Confirm", "Cancel"};
+		int option = JOptionPane.showOptionDialog(this,
+				"Are you sure you want to remove this book?",
+				"Remove Book", JOptionPane.YES_NO_OPTION,
+				JOptionPane.QUESTION_MESSAGE, null, options,
+				options[1]);
+		if( option == 0 ) {
+			if (list.getSelectedIndex() > -1) {
+				library.removeBook(library.getItems()
+						.get(list.getSelectedIndex()));
+			}
+		}
 	}
-	
 	protected void initDataBindings() {
 		BeanProperty<Library, List<Book>> libraryBeanProperty = BeanProperty.create("items");
 		JListBinding<Book, Library, JList> jListBinding = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty, list);
@@ -579,20 +503,15 @@ public class BookManagerApp extends JFrame
 		//
 		jListBinding.bind();
 		//
-		BeanProperty<JList, String> jListBeanProperty = BeanProperty.create("selectedElement.type");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty, typeField, jTextFieldBeanProperty);
-		autoBinding.bind();
-		//
 		BeanProperty<JList, Double> jListBeanProperty_1 = BeanProperty.create("selectedElement.retailPrice");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_1 = BeanProperty.create("text");
-		AutoBinding<JList, Double, JTextField, String> autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_1, priceField, jTextFieldBeanProperty_1);
-		autoBinding_1.bind();
+		AutoBinding<JList, Double, JTextField, String> autoBinding = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_1, priceField, jTextFieldBeanProperty_1);
+		autoBinding.bind();
 		//
 		BeanProperty<JList, String> jListBeanProperty_2 = BeanProperty.create("selectedElement.publicationDate");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_2 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_2 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_2, pubDateField, jTextFieldBeanProperty_2);
-		autoBinding_2.bind();
+		AutoBinding<JList, String, JTextField, String> autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_2, pubDateField, jTextFieldBeanProperty_2);
+		autoBinding_1.bind();
 		//
 		BeanProperty<JList, Integer> jListBeanProperty_3 = BeanProperty.create("selectedElement.period");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_3 = BeanProperty.create("text");
@@ -601,18 +520,18 @@ public class BookManagerApp extends JFrame
 		//
 		BeanProperty<JList, String> jListBeanProperty_4 = BeanProperty.create("selectedElement.title");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_4 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_4 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_4, titleField, jTextFieldBeanProperty_4);
-		autoBinding_4.bind();
+		AutoBinding<JList, String, JTextField, String> autoBinding_2 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_4, titleField, jTextFieldBeanProperty_4);
+		autoBinding_2.bind();
 		//
 		BeanProperty<JList, String> jListBeanProperty_5 = BeanProperty.create("selectedElement.author");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_5 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_5, authorField, jTextFieldBeanProperty_5);
-		autoBinding_5.bind();
+		AutoBinding<JList, String, JTextField, String> autoBinding_4 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_5, authorField, jTextFieldBeanProperty_5);
+		autoBinding_4.bind();
 		//
 		BeanProperty<JList, String> jListBeanProperty_6 = BeanProperty.create("selectedElement.publisher");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_6 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_6, publisherField, jTextFieldBeanProperty_6);
-		autoBinding_6.bind();
+		AutoBinding<JList, String, JTextField, String> autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_6, publisherField, jTextFieldBeanProperty_6);
+		autoBinding_5.bind();
 		//
 		BeanProperty<JList, Integer> jListBeanProperty_7 = BeanProperty.create("selectedElement.genre");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_7 = BeanProperty.create("text");

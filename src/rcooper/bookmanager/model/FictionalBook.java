@@ -2,22 +2,21 @@ package rcooper.bookmanager.model;
 
 public class FictionalBook extends Book
 {
-
+	private final String INFO = "Genre";
 	private String genre;
 	
-	public FictionalBook(int id, String title, String author, String publisher,
+	public FictionalBook()
+	{
+		super();
+	}
+	
+	public FictionalBook(String title, String author, String publisher,
 			String pubDate, double retailPrice, String type, String genre)
 	{
-		super(id, title, author, publisher, pubDate, retailPrice, type);
-		this.genre = genre;
+		super(title, author, publisher, pubDate, retailPrice, type, genre);
 	}
 
 	/* ACCESSORS */
-	
-	public String getGenre()
-	{
-		return genre;
-	}
 
 	@Override
 	public String toString()
