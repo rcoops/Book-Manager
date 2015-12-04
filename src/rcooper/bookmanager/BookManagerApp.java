@@ -26,6 +26,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
@@ -50,19 +51,18 @@ public class BookManagerApp extends JFrame
 {
 	
 	private JMenuBar menuBar;
-	private JMenu file, help;
-	private JMenuItem newBook, openBook, closeBook, about, readMe;
-	private JTabbedPane tabbedPane;
+	private JMenu mnFile, mnHelp;
+	private JMenuItem mnINew, mnIOpen, mnIClose, mnIAbout, mnIReadMe;
+	private JTabbedPane mainPane;
 	private JScrollPane listPane;
-	private JPanel detailsView, reportView, detailsPanel, 
-		controlPanel, filler;
-	private JLabel titleLabel, authorLabel, publisherLabel, pubDateLabel,
-		priceLabel, typeLabel, infoLabel;
-	private JTextField titleField, authorField, publisherField, pubDateField,
-		priceField, infoField;
-	private JComboBox<String> typeField;
+	private JSplitPane detailsView;
+	private JPanel reportView, detailsPanel, pnlControls;
+	private JLabel lblTitle, lblAuthor, lblPublisher, lblPubDate,
+		lblPrice, lblType, lblInfo;
+	private JTextField txtTitle, txtAuthor, txtPublisher, txtPubDate,
+		txtPrice, txtInfo, txtType;
 	private JList<String> list;
-	private JButton addButton, editButton, removeButton, saveButton, cancelButton;
+	private JButton btnAdd, btnEdit, btnRemove;
 	private List<JComponent> detailsComponents;
 	private List<JButton> buttons;
 	private List<String> types;
@@ -103,23 +103,23 @@ public class BookManagerApp extends JFrame
 		menuBar = new JMenuBar();
 		
 		//// Menu bar menus ////
-		file = new JMenu("File");
-		help = new JMenu("Help");
+		mnFile = new JMenu("File");
+		mnHelp = new JMenu("Help");
 		
 		//// File menu items ////
-		newBook = new JMenuItem("New");
-		openBook = new JMenuItem("Open...");
-		closeBook = new JMenuItem("Close");
+		mnINew = new JMenuItem("New");
+		mnIOpen = new JMenuItem("Open...");
+		mnIClose = new JMenuItem("Close");
 		
 		//// Help menu items ////
-		readMe = new JMenuItem("View Help");
-		about = new JMenuItem("About Book Manager");
+		mnIReadMe = new JMenuItem("View Help");
+		mnIAbout = new JMenuItem("About Book Manager");
 		
 		//// app child ////
-		tabbedPane = new JTabbedPane();
+		mainPane = new JTabbedPane();
 		
 		//// Tabs ////
-		detailsView = new JPanel(new GridBagLayout());
+		detailsView = new JSplitPane();
 		reportView = new JPanel();
 		
 		//// List pane stuff ////
@@ -127,40 +127,35 @@ public class BookManagerApp extends JFrame
 		
 		//// detailsView children ////
 		listPane = new JScrollPane();
-		detailsPanel = new JPanel(new GridBagLayout());
-		controlPanel = new JPanel(new GridBagLayout());
+		detailsPanel = new JPanel();
 		
 		//// detailsPanel children ////
-		typeLabel = new JLabel("Type:");
-		titleLabel = new JLabel("Title:");
-		authorLabel = new JLabel("Author:");
-		publisherLabel = new JLabel("Publisher:");
-		pubDateLabel = new JLabel("Publication Date:");
-		priceLabel = new JLabel("Retail Price:");
-		infoLabel = new JLabel();
-		typeField = new JComboBox<String>();
-		titleField = new JTextField();
-		authorField = new JTextField();
-		publisherField = new JTextField();
-		pubDateField = new JTextField();
-		priceField = new JTextField();
-		infoField = new JTextField();
-		filler = new JPanel();
+		lblType = new JLabel("Type:");
+		lblTitle = new JLabel("Title:");
+		lblAuthor = new JLabel("Author:");
+		lblPublisher = new JLabel("Publisher:");
+		lblPubDate = new JLabel("Publication Date:");
+		lblPrice = new JLabel("Retail Price:");
+		lblInfo = new JLabel("Additional info:");
+		txtType = new JTextField();
+		txtTitle = new JTextField();
+		txtAuthor = new JTextField();
+		txtPublisher = new JTextField();
+		txtPubDate = new JTextField();
+		txtPrice = new JTextField();
+		txtInfo = new JTextField();
 		detailsComponents = new ArrayList<JComponent>();
 		
 		//// buttonPanel children ////
-		addButton = new JButton("Add");
-		editButton = new JButton("Edit");
-		removeButton = new JButton("Remove");
-		saveButton = new JButton("Save");
-		cancelButton = new JButton("Cancel");
+		btnAdd = new JButton("Add");
+		btnEdit = new JButton("Edit");
+		btnRemove = new JButton("Remove");
 		buttons = new ArrayList<JButton>();
 		
 		//// Set Up Elements ////
 		setFrameProperties(); // app
 		setUpMenu(); // app.menuBar setup
 		setUpTabs(); // app.tabbedPane setup
-		list.setFont(new Font("Arial", Font.PLAIN, 10)); // list
 		setUpDetailsView(); // app.tabbedPane.detailsView setup
 		
 		pack();
@@ -175,26 +170,26 @@ public class BookManagerApp extends JFrame
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setJMenuBar(menuBar);
-		setContentPane( tabbedPane );
+		setContentPane(mainPane);
 	}
 	
 	private void setUpMenu()
 	{
-		menuBar.add(file);
+		menuBar.add(mnFile);
 		menuBar.add(Box.createHorizontalGlue());
-		menuBar.add(help);
+		menuBar.add(mnHelp);
 		
 		//// app.menuBar.file setup ////
-		file.add(newBook);
-		file.add(openBook);
-		file.add(closeBook);
+		mnFile.add(mnINew);
+		mnFile.add(mnIOpen);
+		mnFile.add(mnIClose);
 		
 		//// app.menuBar.help setup ////
-		help.add(readMe);
-		help.add(about);
+		mnHelp.add(mnIReadMe);
+		mnHelp.add(mnIAbout);
 
 		//// app.menuBar.help.about setup ////
-		about.addActionListener(new ActionListener() {
+		mnIAbout.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
@@ -205,149 +200,101 @@ public class BookManagerApp extends JFrame
 	
 	private void setUpTabs()
 	{
-		tabbedPane.addTab("Details View", detailsView);
-		tabbedPane.addTab("Report View", reportView);
+		mainPane.addTab("Details View", detailsView);
+		mainPane.addTab("Report View", reportView);
 	}
 	
 	private void setUpDetailsView()
-	{		
-		GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 2, 0.25, 1,
-				GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-				new Insets(0, 0, 0, 0), 0, 0);
-		detailsView.add(listPane, gbc);
-		
-		gbc = (GridBagConstraints) gbc.clone();
-		gbc.gridx = 1;
-		gbc.gridheight = 1;
-		gbc.weightx = 0.75;
-		detailsView.add(detailsPanel, gbc);
-		
-		gbc = (GridBagConstraints) gbc.clone();
-		gbc.gridy = 1;
-		gbc.weighty = 0.2;
-		detailsView.add(controlPanel, gbc);
+	{
+		detailsView.setLeftComponent(listPane);
+		detailsView.setRightComponent(detailsPanel);
 		
 		//// app.tabbedPane.detailsView.listPane setup ////
 		setListProperties();
 		
-		//// app.tabbedPane.detailsView.detailsPanel setup ////
-		
-		addDetailLabels();
-		
-		addDetailFields();
-		
-		// Filler
-		addDetailFiller();
-		
-		// Set bulk properties for text containers
-		Component[] components = detailsPanel.getComponents();
-		buttons = new ArrayList<JButton>();
-		for(Component component : components) {
-			detailsComponents.add((JComponent) component);
-		}
-		for(JComponent component : detailsComponents) {
-			if(!(component instanceof JPanel)) {
-				component.setFont(new Font("Arial", Font.PLAIN, 14));
-				if(component instanceof JTextField) {
-					JTextField textComp = (JTextField) component;
-					textComp.setEditable(false);
-				}
-				if(component instanceof JComboBox) {
-					JComboBox<String> comboBox = (JComboBox<String>) component;
-					comboBox.setEnabled(false);
-				}
-			}
-		}
-		
-		components = controlPanel.getComponents();
-		for(Component component : components) {
-			buttons.add((JButton) component);
-		}
-		
-		//// app.tabbedPane.detailsView.controlPanel setup ////
-		addDetailControls();
+		setDetailsPanel();
 	}
 	
-	private void addDetailLabels()
+	private void setDetailsPanel()
 	{
-		JLabel[] leftLabels = {titleLabel, authorLabel, publisherLabel,
-				infoLabel, subjectLabel};
-		JLabel[] rightLabels = {typeLabel, priceLabel, null, pubDateLabel, 
-				periodLabel};
+		lblType = new JLabel("Type:");
+		lblTitle = new JLabel("Title:");
+		lblAuthor = new JLabel("Author:");
+		lblPublisher = new JLabel("Publisher:");
+		lblPubDate = new JLabel("Publication Date:");
+		lblPrice = new JLabel("Retail Price:");
+		lblInfo = new JLabel();
+		txtType = new JTextField();
+		txtTitle = new JTextField();
+		txtAuthor = new JTextField();
+		txtPublisher = new JTextField();
+		txtPubDate = new JTextField();
+		txtPrice = new JTextField();
+		txtInfo = new JTextField();
+		pnlControls = new JPanel(new GridBagLayout());
 
-		// Left labels
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.weightx = 0.1;
-		gbc.weighty = 1;
-		gbc.anchor = GridBagConstraints.LINE_END;
+		GridBagLayout layout = new GridBagLayout();
+		layout.columnWeights = new double[] {0.15, 0.4, 0.3, 0.15};
+		layout.rowWeights = new double[] {0.2, 0.2, 0.2, 0.2, 0.2};
+		detailsPanel.setLayout(layout);
+		GridBagConstraints gbcLabels = new GridBagConstraints();
+		gbcLabels.anchor = GridBagConstraints.EAST;
+		gbcLabels.gridx = 0;
+		gbcLabels.gridy = GridBagConstraints.RELATIVE;
+		detailsPanel.add(lblTitle, gbcLabels);
+		gbcLabels = (GridBagConstraints) gbcLabels.clone();
+		detailsPanel.add(lblAuthor, gbcLabels);
+		gbcLabels = (GridBagConstraints) gbcLabels.clone();
+		detailsPanel.add(lblPublisher, gbcLabels);
+		gbcLabels = (GridBagConstraints) gbcLabels.clone();
+		detailsPanel.add(lblInfo, gbcLabels);
+		gbcLabels = (GridBagConstraints) gbcLabels.clone();
+		gbcLabels = new GridBagConstraints();
+		gbcLabels.anchor = GridBagConstraints.EAST;
+		gbcLabels.gridx = 2;
+		gbcLabels.gridy = GridBagConstraints.RELATIVE;
+		detailsPanel.add(lblType, gbcLabels);
+		gbcLabels = (GridBagConstraints) gbcLabels.clone();
+		detailsPanel.add(lblPrice, gbcLabels);
+		gbcLabels = (GridBagConstraints) gbcLabels.clone();
+		detailsPanel.add(lblPubDate, gbcLabels);
+		gbcLabels = (GridBagConstraints) gbcLabels.clone();
 		
-		for(int i = 0; i < 5; i++) {
-			gbc.gridy = i;
-			detailsPanel.add(leftLabels[i], gbc);
-		}
+		GridBagConstraints gbcTextFields = new GridBagConstraints();
+		gbcTextFields.anchor = GridBagConstraints.WEST;
+		gbcTextFields.gridx = 1;
+		gbcTextFields.fill = GridBagConstraints.HORIZONTAL;
+		detailsPanel.add(txtTitle, gbcTextFields);
+		gbcTextFields = (GridBagConstraints) gbcTextFields.clone();
+		detailsPanel.add(txtAuthor, gbcTextFields);
+		gbcTextFields = (GridBagConstraints) gbcTextFields.clone();
+		detailsPanel.add(txtPublisher, gbcTextFields);
+		gbcTextFields = (GridBagConstraints) gbcTextFields.clone();
+		detailsPanel.add(txtInfo, gbcTextFields);
 		
-		// Right labels
-		gbc.gridx = 2;
-		for(int i = 0; i < 5; i++) {
-			if(i != 2) {
-				gbc.gridy = i;
-				detailsPanel.add(rightLabels[i], gbc);
-			}
-		}
-	}
-	
-	private void addDetailFields()
-	{
-		// Right fields
-		GridBagConstraints gbc = new GridBagConstraints(3, 0, 1, 1, 0.2, 1,
-				GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
-				new Insets(0, 0, 0, 0), 0, 0);
-		detailsPanel.add(typeField, gbc);
-		gbc = (GridBagConstraints) gbc.clone();
-		gbc.gridy = 1;
-		detailsPanel.add(priceField, gbc);
-		gbc = (GridBagConstraints) gbc.clone();
-		gbc.gridy = 3;
-		detailsPanel.add(pubDateField, gbc);
-		gbc = (GridBagConstraints) gbc.clone();
-		gbc.gridy = 4;
-		detailsPanel.add(periodField, gbc);
+		gbcTextFields = (GridBagConstraints) gbcTextFields.clone();
+		gbcTextFields.insets = new Insets(0,0,0,35);
+		gbcTextFields.gridx = 3;
+		detailsPanel.add(txtType, gbcTextFields); // margin right
+		gbcTextFields = (GridBagConstraints) gbcTextFields.clone();
+		detailsPanel.add(txtPrice, gbcTextFields); // margin right
+		gbcTextFields = (GridBagConstraints) gbcTextFields.clone();
+		detailsPanel.add(txtPubDate, gbcTextFields); // margin right
+		GridBagConstraints gbcCtrlPanel = new GridBagConstraints();
+		gbcCtrlPanel.gridx = 0;
+		gbcCtrlPanel.gridy = 4;
+		gbcCtrlPanel.gridwidth = 4;
+		gbcCtrlPanel.fill = GridBagConstraints.BOTH;
+		detailsPanel.add(pnlControls, gbcCtrlPanel);
 		
-		// Left fields
-		gbc = (GridBagConstraints) gbc.clone();
-		gbc.gridx = 1;
-		gbc.weightx = 0.5;
-		gbc.gridy = 0;
-		detailsPanel.add(titleField, gbc);
-		gbc = (GridBagConstraints) gbc.clone();
-		gbc.gridy = 1;
-		detailsPanel.add(authorField, gbc);
-		gbc = (GridBagConstraints) gbc.clone();
-		gbc.gridy = 2;
-		detailsPanel.add(publisherField, gbc);
-		gbc = (GridBagConstraints) gbc.clone();
-		gbc.gridy = 3;
-		detailsPanel.add(genreField, gbc);
-		gbc = (GridBagConstraints) gbc.clone();
-		gbc.gridy = 4;
-		detailsPanel.add(subjectField, gbc);
-	}
-	
-	private void addDetailFiller()
-	{
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.gridx=5;
-		gbc.gridy=0;
-		gbc.weightx = 0.1;
-		gbc.gridheight = 5;
-		detailsPanel.add(filler, gbc);
+		addDetailControls();
 	}
 	
 	private void addDetailControls()
 	{
-		Insets buttonInsets = new Insets(5, 10, 5, 10);
-		addButton.setMargin(buttonInsets);
-		addButton.addActionListener(new ActionListener()
+		Insets buttonInsets = new Insets(10, 20, 10, 20);
+		btnAdd.setMargin(buttonInsets);
+		btnAdd.addActionListener(new ActionListener()
 		{
 			public void actionPerformed(ActionEvent e)
 			{
@@ -355,8 +302,8 @@ public class BookManagerApp extends JFrame
 			}
 		});
 		
-		editButton.setMargin(buttonInsets);
-		editButton.addActionListener(new ActionListener()
+		btnEdit.setMargin(buttonInsets);
+		btnEdit.addActionListener(new ActionListener()
 		{
 			public void actionPerformed(ActionEvent e)
 			{
@@ -364,8 +311,8 @@ public class BookManagerApp extends JFrame
 			}
 		});
 		
-		removeButton.setMargin(buttonInsets);
-		removeButton.addActionListener(new ActionListener()
+		btnRemove.setMargin(buttonInsets);
+		btnRemove.addActionListener(new ActionListener()
 		{
 			public void actionPerformed(ActionEvent e)
 			{
@@ -373,47 +320,24 @@ public class BookManagerApp extends JFrame
 			}
 		});
 		
-		saveButton.setMargin(buttonInsets);
-		saveButton.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				
-			}
-		});
-		cancelButton.setMargin(buttonInsets);
-		cancelButton.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				
-			}
-		});
-		
-		editButton.setEnabled(false);
-		removeButton.setEnabled(false);
-		saveButton.setVisible(false);
-		cancelButton.setVisible(false);
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.weightx = 0.3;
-		controlPanel.add(addButton, gbc);
-		gbc = (GridBagConstraints) gbc.clone();
-		gbc.gridx = 1;
-		controlPanel.add(editButton, gbc);
-		gbc = (GridBagConstraints) gbc.clone();
-		gbc.gridx = 2;
-		controlPanel.add(removeButton, gbc);
-		gbc = new GridBagConstraints();
-		controlPanel.add(saveButton, gbc);
-		gbc = new GridBagConstraints();
-		gbc.gridx = GridBagConstraints.RELATIVE;
-		controlPanel.add(cancelButton, gbc);
+		btnEdit.setEnabled(false);
+		btnRemove.setEnabled(false);
+		GridBagConstraints btnGbc1 = new GridBagConstraints();
+		btnGbc1.weightx = 0.3;
+		pnlControls.add(btnAdd, btnGbc1);
+		GridBagConstraints btnGbc2 = (GridBagConstraints) btnGbc1.clone();
+		btnGbc2.gridx = 1;
+		pnlControls.add(btnEdit, btnGbc2);
+		GridBagConstraints btnGbc3 = (GridBagConstraints) btnGbc2.clone();
+		btnGbc3.gridx = 2;
+		pnlControls.add(btnRemove, btnGbc3);
 	}
 	
 	private void setListProperties()
 	{
 		listPane.setViewportView( list );
-		
+
+		list.setFont(new Font("Arial", Font.PLAIN, 10));
 		list.getSelectionModel().addListSelectionListener(
 				new ListSelectionListener()
 		{
@@ -431,26 +355,8 @@ public class BookManagerApp extends JFrame
 				} else {
 					Book book = library.getItems().get(list.getSelectedIndex());
 					String bookType = book.getType();
-					editButton.setEnabled(true);
-					removeButton.setEnabled(true);
-					if(!bookType.equals("Fictional")) {
-						genreField.setText("N/A");
-						genreField.setEnabled(false);
-					} else {
-						genreField.setEnabled(true);
-					}
-					if(!bookType.equals("Textbook")) {
-						subjectField.setText("N/A");
-						subjectField.setEnabled(false);
-					} else {
-						subjectField.setEnabled(true);
-					}
-					if(!bookType.equals("History")) {
-						periodField.setText("N/A");
-						periodField.setEnabled(false);
-					} else {
-						periodField.setEnabled(true);
-					}
+					btnEdit.setEnabled(true);
+					btnRemove.setEnabled(true);
 				}
 			}
 		});
@@ -503,44 +409,44 @@ public class BookManagerApp extends JFrame
 		//
 		jListBinding.bind();
 		//
-		BeanProperty<JList, Double> jListBeanProperty_1 = BeanProperty.create("selectedElement.retailPrice");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty_1 = BeanProperty.create("text");
-		AutoBinding<JList, Double, JTextField, String> autoBinding = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_1, priceField, jTextFieldBeanProperty_1);
+		BeanProperty<JList, String> jListBeanProperty = BeanProperty.create("selectedElement.title");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty = BeanProperty.create("text");
+		AutoBinding<JList, String, JTextField, String> autoBinding = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty, txtTitle, jTextFieldBeanProperty);
 		autoBinding.bind();
 		//
-		BeanProperty<JList, String> jListBeanProperty_2 = BeanProperty.create("selectedElement.publicationDate");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty_2 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_2, pubDateField, jTextFieldBeanProperty_2);
+		BeanProperty<JList, String> jListBeanProperty_1 = BeanProperty.create("selectedElement.author");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty_1 = BeanProperty.create("text");
+		AutoBinding<JList, String, JTextField, String> autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_1, txtAuthor, jTextFieldBeanProperty_1);
 		autoBinding_1.bind();
 		//
-		BeanProperty<JList, Integer> jListBeanProperty_3 = BeanProperty.create("selectedElement.period");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty_3 = BeanProperty.create("text");
-		AutoBinding<JList, Integer, JTextField, String> autoBinding_3 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_3, periodField, jTextFieldBeanProperty_3);
-		autoBinding_3.bind();
-		//
-		BeanProperty<JList, String> jListBeanProperty_4 = BeanProperty.create("selectedElement.title");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty_4 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_2 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_4, titleField, jTextFieldBeanProperty_4);
+		BeanProperty<JList, String> jListBeanProperty_2 = BeanProperty.create("selectedElement.publisher");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty_2 = BeanProperty.create("text");
+		AutoBinding<JList, String, JTextField, String> autoBinding_2 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_2, txtPublisher, jTextFieldBeanProperty_2);
 		autoBinding_2.bind();
 		//
-		BeanProperty<JList, String> jListBeanProperty_5 = BeanProperty.create("selectedElement.author");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty_5 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_4 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_5, authorField, jTextFieldBeanProperty_5);
+		BeanProperty<JList, String> jListBeanProperty_3 = BeanProperty.create("selectedElement.type");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty_3 = BeanProperty.create("text");
+		AutoBinding<JList, String, JTextField, String> autoBinding_3 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_3, txtType, jTextFieldBeanProperty_3);
+		autoBinding_3.bind();
+		//
+		BeanProperty<JList, Double> jListBeanProperty_4 = BeanProperty.create("selectedElement.price");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty_4 = BeanProperty.create("text");
+		AutoBinding<JList, Double, JTextField, String> autoBinding_4 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_4, txtPrice, jTextFieldBeanProperty_4);
 		autoBinding_4.bind();
 		//
-		BeanProperty<JList, String> jListBeanProperty_6 = BeanProperty.create("selectedElement.publisher");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty_6 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_6, publisherField, jTextFieldBeanProperty_6);
+		BeanProperty<JList, String> jListBeanProperty_5 = BeanProperty.create("selectedElement.pubDate");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty_5 = BeanProperty.create("text");
+		AutoBinding<JList, String, JTextField, String> autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_5, txtPubDate, jTextFieldBeanProperty_5);
 		autoBinding_5.bind();
 		//
-		BeanProperty<JList, Integer> jListBeanProperty_7 = BeanProperty.create("selectedElement.genre");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty_7 = BeanProperty.create("text");
-		AutoBinding<JList, Integer, JTextField, String> autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_7, genreField, jTextFieldBeanProperty_7);
-		autoBinding_7.bind();
+		BeanProperty<JList, String> jListBeanProperty_6 = BeanProperty.create("selectedElement.infoLabel");
+		BeanProperty<JLabel, String> jLabelBeanProperty = BeanProperty.create("text");
+		AutoBinding<JList, String, JLabel, String> autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_6, lblInfo, jLabelBeanProperty);
+		autoBinding_6.bind();
 		//
-		BeanProperty<JList, Integer> jListBeanProperty_8 = BeanProperty.create("selectedElement.subject");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty_8 = BeanProperty.create("text");
-		AutoBinding<JList, Integer, JTextField, String> autoBinding_8 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_8, subjectField, jTextFieldBeanProperty_8);
-		autoBinding_8.bind();
+		BeanProperty<JList, String> jListBeanProperty_7 = BeanProperty.create("selectedElement.infoValue");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty_6 = BeanProperty.create("text");
+		AutoBinding<JList, String, JTextField, String> autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_7, txtInfo, jTextFieldBeanProperty_6);
+		autoBinding_7.bind();
 	}
 }

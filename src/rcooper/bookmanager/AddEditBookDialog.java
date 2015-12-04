@@ -9,6 +9,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -58,7 +59,7 @@ public class AddEditBookDialog extends JDialog
 		txtPubDate = new JTextField();
 		txtPrice = new JTextField();
 		txtInfo = new JTextField();
-		pnlControls = new JPanel();
+		pnlControls = new JPanel(new GridBagLayout());
 		btnSave = new JButton("Save");
 		btnCancel = new JButton("Cancel");
 
@@ -112,15 +113,31 @@ public class AddEditBookDialog extends JDialog
 		GridBagConstraints gbcCtrlPanel = new GridBagConstraints();
 		gbcCtrlPanel.gridx = 0;
 		gbcCtrlPanel.gridwidth = 4;
+		gbcCtrlPanel.fill = GridBagConstraints.BOTH;
 		getContentPane().add(pnlControls, gbcCtrlPanel);
 		
-		pnlControls.add(btnSave);
-		pnlControls.add(btnCancel);
+		GridBagConstraints ctrlButtonGbc = new GridBagConstraints();
+		Insets buttonInsets = new Insets(10, 20, 10, 20);; 
+		ctrlButtonGbc.weightx = 0.5;
+		btnSave.setMargin(buttonInsets);
+		btnCancel.setMargin(buttonInsets);
+		pnlControls.add(btnSave, ctrlButtonGbc);
+		pnlControls.add(btnCancel, ctrlButtonGbc);
 		initDataBindings();
 	}
 	
 	protected void initDataBindings() {
 		JComboBoxBinding<String, List<String>, JComboBox> jComboBinding = SwingBindings.createJComboBoxBinding(UpdateStrategy.READ, types, cBxType);
 		jComboBinding.bind();
+		//
+		BeanProperty<Book, String> jListBeanProperty_6 = BeanProperty.create("infoLabel");
+		BeanProperty<JLabel, String> jLabelBeanProperty = BeanProperty.create("text");
+		AutoBinding<Book, String, JLabel, String> autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ, book, jListBeanProperty_6, lblInfo, jLabelBeanProperty);
+		autoBinding_6.bind();
+		//
+		BeanProperty<Book, String> jListBeanProperty_7 = BeanProperty.create("infoValue");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty_6 = BeanProperty.create("text");
+		AutoBinding<Book, String, JTextField, String> autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ, book, jListBeanProperty_7, txtInfo, jTextFieldBeanProperty_6);
+		autoBinding_7.bind();
 	}
 }

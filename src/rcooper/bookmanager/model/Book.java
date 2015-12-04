@@ -3,33 +3,48 @@ package rcooper.bookmanager.model;
 public abstract class Book extends AbstractModelObject implements Comparable<Book>
 {
 	
-	protected final String INFO = "";
 	protected String type, title, author, publisher, pubDate;
 	protected double price;
 	protected AdditionalInfo info;
 
 	public Book()
 	{
-		this("", "", "", "", 0, "", "");
+		this("", "", "", "", 0, "");
 	}
 	
 	public Book(String title, String author, String publisher,
-			String pubDate, double retailPrice, String type, String info)
+			String pubDate, double price, String type)
 	{
 		this.title = title;
 		this.author = author;
 		this.publisher = publisher;
 		this.pubDate = pubDate;
-		this.price = retailPrice;
+		this.price = price;
 		this.type = type;
-		this.info = new AdditionalInfo(INFO, "");
+		this.info = new AdditionalInfo("", "");
 	}
 
 	/* ACCESSORS */
 
-	public AdditionalInfo getInfo()
+	
+	public String getInfoValue()
 	{
-		return info;
+		return info.value;
+	}
+	
+	public String getInfoLabel()
+	{
+		return info.label;
+	}
+	
+	public String getLabel()
+	{
+		return info.getLabel();
+	}
+	
+	public String getGenre()
+	{
+		return info.getValue();
 	}
 	
 	public String getType()
@@ -52,54 +67,65 @@ public abstract class Book extends AbstractModelObject implements Comparable<Boo
 		return publisher;
 	}
 
-	public String getPublicationDate()
+	public String getPubDate()
 	{
 		return pubDate;
 	}
 
-	public double getRetailPrice()
+	public double getPrice()
 	{
 		return price;
 	}
 
-	@Override
-	public String toString()
-	{
-		StringBuilder sb = new StringBuilder(type + " ");
-		sb.append(title + " ");
-		sb.append(author + " ");
-		sb.append(publisher + " ");
-		sb.append(pubDate + " ");
-		sb.append(price + " ");
-		
-		return sb.toString();
-	}
-
 	/* MUTATORS */
-
+	
 	public void setTitle(String title)
 	{
+		String old = this.title;
 		this.title = title;
+		firePropertyChange("title", old, this.title);
 	}
 
 	public void setAuthor(String author)
 	{
+		String old = this.author;
 		this.author = author;
+		firePropertyChange("author", old, this.author);
 	}
 
 	public void setPublisher(String publisher)
 	{
+		String old = this.publisher;
 		this.publisher = publisher;
+		firePropertyChange("publisher", old, this.publisher);
 	}
 
-	public void setPublicationDate(String pubDate)
+	public void setPubDate(String pubDate)
 	{
+		String old = this.pubDate;
 		this.pubDate = pubDate;
+		firePropertyChange("pubDate", old, this.pubDate);
 	}
 
-	public void setRetailPrice(double retailPrice)
+	public void setPrice(double price)
 	{
-		this.price = retailPrice;
+		double old = this.price;
+		this.price = price;
+		firePropertyChange("price", old, this.price);
+	}
+
+	public void setInfoLabel(String label)
+	{
+		String old = this.info.getLabel();
+		this.info.setLabel(label);
+		firePropertyChange("infoLabel", old, this.info.getLabel());
+	}
+
+	public void setInfoValue(String value)
+	{
+		String old = this.info.getValue();
+		this.info.setValue(value);
+		firePropertyChange("infoValue", old, this.info.getValue());
 	}
 
 	@Override

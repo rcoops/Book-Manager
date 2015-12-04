@@ -60,7 +60,7 @@ public class Library extends AbstractModelObject implements Serializable
 		double total = 0;
 		
 		for(Book book : items) {
-			total += book.getRetailPrice();
+			total += book.getPrice();
 		}
 		
 		return total;
