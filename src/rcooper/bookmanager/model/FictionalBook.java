@@ -18,9 +18,9 @@ public class FictionalBook extends Book
 	}
 	
 	public FictionalBook(String title, String author, String publisher,
-			String pubDate, double retailPrice, String genre)
+			String pubDate, double price, String genre)
 	{
-		super(title, author, publisher, pubDate, retailPrice);
+		super(title, author, publisher, pubDate, price);
 		setType(TYPE);
 		setInfoLabel(INFO_LABEL);
 		setInfoValue(genre);

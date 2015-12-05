@@ -48,11 +48,6 @@ public abstract class Book extends AbstractModelObject implements Comparable<Boo
 		return info.getLabel();
 	}
 	
-	public String getGenre()
-	{
-		return info.getValue();
-	}
-	
 	public String getType()
 	{
 		return type;

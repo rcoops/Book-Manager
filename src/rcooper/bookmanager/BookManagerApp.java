@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.swing.Box;
@@ -38,6 +39,7 @@ import org.jdesktop.beansbinding.AutoBinding;
 import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
+import org.jdesktop.beansbinding.Converter;
 import org.jdesktop.beansbinding.ELProperty;
 import org.jdesktop.swingbinding.JListBinding;
 import org.jdesktop.swingbinding.SwingBindings;
@@ -52,14 +54,14 @@ public class BookManagerApp extends JFrame
 {
 	
 	private static final long serialVersionUID = 1L;
-	private final int SAVE_DIALOG = 0, OPEN_DIALOG = 1;
+	private final int SAVE_DIALOG = 0, OPEN_DIALOG = 1, EDIT_BOOK = 2, ADD_BOOK = 3;
 	private final Object[] TYPES = {"Fictional", "History", "Textbook"};
 	
 	private JPanel detailsPanel;
 	private JLabel lblInfo;
 	private JTextField txtTitle, txtAuthor, txtPublisher, txtPubDate, txtPrice, txtInfo, txtType;
 	private JList<String> list;
-	private JButton btnEdit, btnRemove;
+	private JButton btnAdd, btnEdit, btnRemove;
 	
 	private Library library;
 	
@@ -86,13 +88,13 @@ public class BookManagerApp extends JFrame
 		library.addBook(new FictionalBook("The Colour of Magic", "Terry Pratchett", "Corgi", "18.01.1985", 5.50 , "Fantasy/Comedy"));
 		library.addBook(new TextBook("Objects First with Java", "David Barnes & Michael Kölling", "Pearson", "30.09.2011", 59.99 , "Java Programming"));
 		library.addBook(new HistoryBook("SPQR: A history of Ancient Rome", "Professor Mary Beard", "Profile Books", "20.10.2015", 17.00 , "Ancient History"));
-		setUpFrame(new JTabbedPane(), new JMenuBar()); // app
+		init(new JTabbedPane(), new JMenuBar()); 
 		
 		pack();
 		initDataBindings();
 	}
 	
-	private void setUpFrame(JTabbedPane mainPane, JMenuBar menuBar)
+	private void init(JTabbedPane mainPane, JMenuBar menuBar)
 	{
 		setTitle("Book Manager");
 		setSize(800, 600);
@@ -101,11 +103,11 @@ public class BookManagerApp extends JFrame
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setJMenuBar(menuBar);
 		setContentPane(mainPane);
-		setUpMenu(menuBar); // app.menuBar setup
-		setUpTabs(mainPane); // app.tabbedPane setup
+		initMenu(menuBar); // app.menuBar setup
+		initTabs(mainPane); // app.tabbedPane setup
 	}
 	
-	private void setUpMenu(JMenuBar menuBar)
+	private void initMenu(JMenuBar menuBar)
 	{
 		
 		//// Menu bar menus ////
@@ -180,7 +182,7 @@ public class BookManagerApp extends JFrame
 		});
 	}
 	
-	private void setUpTabs(JTabbedPane mainPane)
+	private void initTabs(JTabbedPane mainPane)
 	{
 		JSplitPane detailsView = new JSplitPane();
 		JPanel reportView = new JPanel();
@@ -188,10 +190,10 @@ public class BookManagerApp extends JFrame
 		mainPane.addTab("Details View", detailsView);
 		mainPane.addTab("Report View", reportView);
 		
-		setUpDetailsView(detailsView, reportView);
+		initDetailsView(detailsView, reportView);
 	}
 	
-	private void setUpDetailsView(JSplitPane detailsView, JPanel reportView)
+	private void initDetailsView(JSplitPane detailsView, JPanel reportView)
 	{
 		detailsPanel = new JPanel();
 		JScrollPane listPane = new JScrollPane();
@@ -200,13 +202,13 @@ public class BookManagerApp extends JFrame
 		detailsView.setRightComponent(detailsPanel);
 		
 		//// app.tabbedPane.detailsView.listPane setup ////
-		setListProperties(listPane);
+		initListPane(listPane);
 		
 		//// app.tabbedPane.detailsView.detailsPanel setup ////
-		setDetailsPanel();
+		initDetailsPanel();
 	}
 	
-	private void setDetailsPanel()
+	private void initDetailsPanel()
 	{
 		JLabel lblType = new JLabel("Type:");
 		JLabel lblTitle = new JLabel("Title:");
@@ -232,28 +234,42 @@ public class BookManagerApp extends JFrame
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.anchor = GridBagConstraints.EAST;
 		gbc.gridx = 0;
-		gbc.gridy = GridBagConstraints.RELATIVE;
+		//gbc.gridy = GridBagConstraints.RELATIVE;
 		detailsPanel.add(lblTitle, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(lblAuthor, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(lblPublisher, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(lblInfo, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
 		gbc.gridx = 2;
 		detailsPanel.add(lblType, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(lblPrice, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(lblPubDate, gbc);
-		
+
+		gbc = (GridBagConstraints) gbc.clone();
 		gbc.anchor = GridBagConstraints.WEST;
 		gbc.gridx = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		detailsPanel.add(txtTitle, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(txtAuthor, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(txtPublisher, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(txtInfo, gbc);
 		
+
+		gbc = (GridBagConstraints) gbc.clone();
 		gbc.insets = new Insets(0,0,0,35);
 		gbc.gridx = 3;
 		detailsPanel.add(txtType, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(txtPrice, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(txtPubDate, gbc);
 		
 		gbc = new GridBagConstraints();
@@ -266,12 +282,12 @@ public class BookManagerApp extends JFrame
 		txtType.setEditable(false);
 		setDetailsVisible(false);
 		setFieldsEditable(false);
-		addDetailControls(pnlControls);
+		initDetailControls(pnlControls);
 	}
 	
-	private void addDetailControls(JPanel pnlControls)
+	private void initDetailControls(JPanel pnlControls)
 	{
-		JButton btnAdd = new JButton("Add");
+		btnAdd = new JButton("Add");
 		btnEdit = new JButton("Edit");
 		btnRemove = new JButton("Remove");
 		
@@ -282,7 +298,8 @@ public class BookManagerApp extends JFrame
 			
 			public void actionPerformed(ActionEvent e)
 			{
-				addBook();
+				// Don't use ADD_BOOK but easier to see what's happening
+				addEditBook(ADD_BOOK); 
 			}
 			
 		});
@@ -293,7 +310,7 @@ public class BookManagerApp extends JFrame
 			
 			public void actionPerformed(ActionEvent e)
 			{
-				editBook();
+				addEditBook(EDIT_BOOK);
 			}
 			
 		});
@@ -313,13 +330,15 @@ public class BookManagerApp extends JFrame
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.weightx = 0.3;
 		pnlControls.add(btnAdd, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
 		gbc.gridx = 1;
 		pnlControls.add(btnEdit, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
 		gbc.gridx = 2;
 		pnlControls.add(btnRemove, gbc);
 	}
 	
-	private void setListProperties(JScrollPane listPane)
+	private void initListPane(JScrollPane listPane)
 	{
 		list = new JList<String>();
 		listPane.setViewportView( list );
@@ -333,7 +352,7 @@ public class BookManagerApp extends JFrame
 			{
 				setFieldsEditable(false);
 				
-				if(list.getSelectedIndex() == -1) {
+				if(list.getSelectedIndex() == -1) { // No item selected
 					setDetailsVisible(false);
 					for(Component component : detailsPanel.getComponents()) {
 						if( component instanceof JTextField) {
@@ -357,31 +376,39 @@ public class BookManagerApp extends JFrame
 		JOptionPane.showMessageDialog(this, "Book Manager App Version 0.1"); //TODO version number from package?
 	}
 	
-	private void addBook()
+	private void addEditBook(int editingBook)
 	{
-		Book book = null;
-		String choice = (String) JOptionPane.showInputDialog(this, "Please select a book type:", "Type Selection", JOptionPane.PLAIN_MESSAGE, null, TYPES, TYPES[1]);
-		try {
+		boolean edit = editingBook == EDIT_BOOK;
+		Book book = null, oldBook = null;
+		if(edit) { // Need to get the default type
+			oldBook = library.getBook(list.getSelectedIndex());
+		}
+		String choice = (String) JOptionPane.showInputDialog(this, "Please select a book type:", "Type Selection", JOptionPane.PLAIN_MESSAGE, null, TYPES, (edit) ? oldBook.getType() : TYPES[0]);
+		if(choice!=null) { // Cancel not pressed
 			switch(choice) {
 				case "Fictional":	book = new FictionalBook();
 									break;
 				case "History":		book = new HistoryBook();
 									break;
 				case "Textbook":	book = new TextBook();
-									break;
 			}
-		} catch(NullPointerException npe) {} // Dealt with
-		
-		if(book != null) {
-			library.addBook(book);
-			list.setSelectedIndex(list.getModel().getSize() -1);
-			editBook();
+			if(edit) {
+				book.setTitle(oldBook.getTitle());
+				book.setAuthor(oldBook.getAuthor());
+				book.setPublisher(oldBook.getPublisher());
+				book.setPubDate(oldBook.getPubDate());
+				book.setPrice(oldBook.getPrice());
+				book.setInfoValue(oldBook.getInfoValue());
+				txtInfo.setText("");
+				library.removeBook(oldBook);
+			}
+			
+			if(book != null) {
+				library.addBook(book);
+				list.setSelectedIndex(list.getModel().getSize() -1);
+				setFieldsEditable(true);
+			}
 		}
-	}
-	
-	private void editBook()
-	{
-		setFieldsEditable(true);
 	}
 	
 	private void removeBook()

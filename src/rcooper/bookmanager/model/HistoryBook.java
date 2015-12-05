@@ -18,9 +18,9 @@ public class HistoryBook extends Book
 	}
 	
 	public HistoryBook(String title, String author, String publisher,
-			String pubDate, double retailPrice, String period)
+			String pubDate, double price, String period)
 	{
-		super(title, author, publisher, pubDate, retailPrice);
+		super(title, author, publisher, pubDate, price);
 		setType(TYPE);
 		setInfoLabel(INFO_LABEL);
 		setInfoValue(period);

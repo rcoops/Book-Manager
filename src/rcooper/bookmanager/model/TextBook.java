@@ -18,9 +18,9 @@ public class TextBook extends Book
 	}
 	
 	public TextBook(String title, String author, String publisher,
-			String pubDate, double retailPrice, String subject)
+			String pubDate, double price, String subject)
 	{
-		super(title, author, publisher, pubDate, retailPrice);
+		super(title, author, publisher, pubDate, price);
 		setType(TYPE);
 		setInfoLabel(INFO_LABEL);
 		setInfoValue(subject);
