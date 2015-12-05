@@ -2,18 +2,28 @@ package rcooper.bookmanager.model;
 
 public class FictionalBook extends Book
 {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private final String INFO_LABEL = "Genre:";
+	private final String TYPE = "Fictional";
 	
 	public FictionalBook()
 	{
 		super();
+		setType(TYPE);
+		setInfoLabel(INFO_LABEL);
 	}
 	
 	public FictionalBook(String title, String author, String publisher,
-			String pubDate, double retailPrice, String type, String genre)
+			String pubDate, double retailPrice, String genre)
 	{
-		super(title, author, publisher, pubDate, retailPrice, type);
-		this.info = new AdditionalInfo(INFO_LABEL, genre);
+		super(title, author, publisher, pubDate, retailPrice);
+		setType(TYPE);
+		setInfoLabel(INFO_LABEL);
+		setInfoValue(genre);
 	}
 
 }

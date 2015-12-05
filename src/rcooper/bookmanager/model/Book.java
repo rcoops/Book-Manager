@@ -1,26 +1,32 @@
 package rcooper.bookmanager.model;
 
-public abstract class Book extends AbstractModelObject implements Comparable<Book>
+import java.io.Serializable;
+
+public abstract class Book extends AbstractModelObject implements Comparable<Book>, Serializable
 {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	protected String type, title, author, publisher, pubDate;
 	protected double price;
 	protected AdditionalInfo info;
 
 	public Book()
 	{
-		this("", "", "", "", 0, "");
+		this("", "", "", "", 0);
 	}
 	
 	public Book(String title, String author, String publisher,
-			String pubDate, double price, String type)
+			String pubDate, double price)
 	{
 		this.title = title;
 		this.author = author;
 		this.publisher = publisher;
 		this.pubDate = pubDate;
 		this.price = price;
-		this.type = type;
+		this.type = "";
 		this.info = new AdditionalInfo("", "");
 	}
 
@@ -29,12 +35,12 @@ public abstract class Book extends AbstractModelObject implements Comparable<Boo
 	
 	public String getInfoValue()
 	{
-		return info.value;
+		return info.getValue();
 	}
 	
 	public String getInfoLabel()
 	{
-		return info.label;
+		return info.getLabel();
 	}
 	
 	public String getLabel()
@@ -77,7 +83,32 @@ public abstract class Book extends AbstractModelObject implements Comparable<Boo
 		return price;
 	}
 
+	@Override
+	public int compareTo(Book otherBook)
+	{
+		return getTitle().compareTo(otherBook.getTitle());
+	}
+	
+	@Override
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder(type + " ");
+		sb.append(title + " ");
+		sb.append(author + " ");
+		sb.append(publisher + " ");
+		sb.append(pubDate + " ");
+		sb.append(price + " ");
+		return sb.toString() + info.toString();
+	}
+
 	/* MUTATORS */
+	
+	public void setType(String type)
+	{
+		String old = this.type;
+		this.type = type;
+		firePropertyChange("type", old, this.type);
+	}
 	
 	public void setTitle(String title)
 	{
@@ -123,14 +154,8 @@ public abstract class Book extends AbstractModelObject implements Comparable<Boo
 
 	public void setInfoValue(String value)
 	{
-		String old = this.info.getValue();
-		this.info.setValue(value);
-		firePropertyChange("infoValue", old, this.info.getValue());
-	}
-
-	@Override
-	public int compareTo(Book otherBook)
-	{
-		return getTitle().compareTo(otherBook.getTitle());
+		String old = info.getValue();
+		info.setValue(value);
+		firePropertyChange("infoValue", old, info.getValue());
 	}
 }

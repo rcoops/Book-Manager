@@ -1,9 +1,15 @@
 package rcooper.bookmanager.model;
 
-public class AdditionalInfo
+import java.io.Serializable;
+
+public class AdditionalInfo implements Serializable
 {
-	String label;
-	String value;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private String label;
+	private String value;
 	
 	public AdditionalInfo()
 	{
@@ -24,6 +30,12 @@ public class AdditionalInfo
 	public String getValue()
 	{
 		return value;
+	}
+	
+	@Override
+	public String toString()
+	{
+		return label + " " + value;
 	}
 
 	public void setLabel(String label)

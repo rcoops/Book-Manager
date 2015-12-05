@@ -3,14 +3,27 @@ package rcooper.bookmanager.model;
 public class HistoryBook extends Book
 {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private final String INFO_LABEL = "Period:";
-	private String period;
-
-	public HistoryBook(String title, String author, String publisher,
-			String pubDate, double retailPrice, String type, String period)
+	private final String TYPE = "History";
+	
+	public HistoryBook()
 	{
-		super(title, author, publisher, pubDate, retailPrice, type);
-		this.info = new AdditionalInfo(INFO_LABEL, period);
+		super();
+		setType(TYPE);
+		setInfoLabel(INFO_LABEL);
+	}
+	
+	public HistoryBook(String title, String author, String publisher,
+			String pubDate, double retailPrice, String period)
+	{
+		super(title, author, publisher, pubDate, retailPrice);
+		setType(TYPE);
+		setInfoLabel(INFO_LABEL);
+		setInfoValue(period);
 	}
 
 }

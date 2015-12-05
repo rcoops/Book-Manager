@@ -30,6 +30,18 @@ public class Library extends AbstractModelObject implements Serializable
 		return items.get(index);
 	}
 	
+	@Override
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder();
+		
+		for(Book item : items) {
+			sb.append( item.toString() + " ");
+		}
+		
+		return sb.toString();
+	}
+	
 	public void addBook(Book book)
 	{
 		List<Book> oldValue = items;
@@ -52,7 +64,11 @@ public class Library extends AbstractModelObject implements Serializable
 		List<Book> oldValue = items;
 		items = newItems;
 		firePropertyChange("items", oldValue, items);
-		firePropertyChange("itemsCount", oldValue.size(), items.size());
+		try {
+			firePropertyChange("itemsCount", oldValue.size(), items.size());
+		} catch( NullPointerException npe) {
+			firePropertyChange("itemsCount", 0, items.size());
+		}
 	}
 	
 	public double calculateTotalValue()
