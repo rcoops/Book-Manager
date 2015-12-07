@@ -27,7 +27,16 @@ public class Library extends AbstractModelObject implements Serializable
 	
 	public Book getBook(int index)
 	{
-		return items.get(index);
+		Book book = null;
+		try {
+			book = items.get(index); 
+		} catch(IndexOutOfBoundsException e) {}
+		return book;
+	}
+	
+	public boolean isEmpty()
+	{
+		return items.isEmpty();
 	}
 	
 	@Override

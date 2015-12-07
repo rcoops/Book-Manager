@@ -1,5 +1,7 @@
 package rcooper.bookmanager.model;
 
+import java.util.GregorianCalendar;
+
 public class FictionalBook extends Book
 {
 	
@@ -18,7 +20,7 @@ public class FictionalBook extends Book
 	}
 	
 	public FictionalBook(String title, String author, String publisher,
-			String pubDate, double price, String genre)
+			GregorianCalendar pubDate, double price, String genre)
 	{
 		super(title, author, publisher, pubDate, price);
 		setType(TYPE);

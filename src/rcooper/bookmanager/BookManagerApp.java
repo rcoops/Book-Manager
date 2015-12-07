@@ -9,10 +9,13 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import javax.swing.Box;
@@ -39,11 +42,11 @@ import org.jdesktop.beansbinding.AutoBinding;
 import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
-import org.jdesktop.beansbinding.Converter;
 import org.jdesktop.beansbinding.ELProperty;
 import org.jdesktop.swingbinding.JListBinding;
 import org.jdesktop.swingbinding.SwingBindings;
 
+import rcooper.bookmanager.components.JTextFieldLimited;
 import rcooper.bookmanager.model.Book;
 import rcooper.bookmanager.model.FictionalBook;
 import rcooper.bookmanager.model.HistoryBook;
@@ -59,11 +62,12 @@ public class BookManagerApp extends JFrame
 	
 	private JPanel detailsPanel;
 	private JLabel lblInfo;
-	private JTextField txtTitle, txtAuthor, txtPublisher, txtPubDate, txtPrice, txtInfo, txtType;
+	private JTextField txtTitle, txtAuthor, txtPublisher, txtPubDateYear, txtPubDateMonth, txtPubDateDay, txtPrice, txtInfo, txtType;
 	private JList<String> list;
 	private JButton btnAdd, btnEdit, btnRemove;
-	
 	private Library library;
+	
+	private Book lastBook;
 	
 	public static void main(String[] args)
 	{
@@ -84,15 +88,16 @@ public class BookManagerApp extends JFrame
 	public BookManagerApp()
 	{
 		library = new Library();
-		
-		library.addBook(new FictionalBook("The Colour of Magic", "Terry Pratchett", "Corgi", "18.01.1985", 5.50 , "Fantasy/Comedy"));
-		library.addBook(new TextBook("Objects First with Java", "David Barnes & Michael Kölling", "Pearson", "30.09.2011", 59.99 , "Java Programming"));
-		library.addBook(new HistoryBook("SPQR: A history of Ancient Rome", "Professor Mary Beard", "Profile Books", "20.10.2015", 17.00 , "Ancient History"));
+		library.addBook(new FictionalBook("The Colour of Magic", "Terry Pratchett", "Corgi", new GregorianCalendar(1984, 1, 18), 5.50 , "Fantasy/Comedy"));
+		library.addBook(new TextBook("Objects First with Java", "David Barnes & Michael Kölling", "Pearson", new GregorianCalendar(2011, 9, 30), 59.99 , "Java Programming"));
+		library.addBook(new HistoryBook("SPQR: A history of Ancient Rome", "Professor Mary Beard", "Profile Books", new GregorianCalendar(2015, 10, 20), 17.00 , "Ancient History"));
 		init(new JTabbedPane(), new JMenuBar()); 
 		
 		pack();
 		initDataBindings();
 	}
+	
+	/* INITIALISATION */
 	
 	private void init(JTabbedPane mainPane, JMenuBar menuBar)
 	{
@@ -216,14 +221,18 @@ public class BookManagerApp extends JFrame
 		JLabel lblPublisher = new JLabel("Publisher:");
 		JLabel lblPubDate = new JLabel("Publication Date:");
 		JLabel lblPrice = new JLabel("Retail Price:");
+		JLabel lblSeparator1 = new JLabel("/");
+		JLabel lblSeparator2 = new JLabel("/");
 		JPanel pnlControls = new JPanel(new GridBagLayout());
-		
+		JPanel pnlDate = new JPanel();
 		lblInfo = new JLabel();
 		txtType = new JTextField();
 		txtTitle = new JTextField();
 		txtAuthor = new JTextField();
 		txtPublisher = new JTextField();
-		txtPubDate = new JTextField();
+		txtPubDateYear = new JTextFieldLimited(4);
+		txtPubDateMonth = new JTextFieldLimited(2);
+		txtPubDateDay = new JTextFieldLimited(2);
 		txtPrice = new JTextField();
 		txtInfo = new JTextField();
 
@@ -262,7 +271,13 @@ public class BookManagerApp extends JFrame
 		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(txtInfo, gbc);
 		
-
+		
+		
+		pnlDate.add(txtPubDateDay);
+		pnlDate.add(lblSeparator1);
+		pnlDate.add(txtPubDateMonth);
+		pnlDate.add(lblSeparator2);
+		pnlDate.add(txtPubDateYear);
 		gbc = (GridBagConstraints) gbc.clone();
 		gbc.insets = new Insets(0,0,0,35);
 		gbc.gridx = 3;
@@ -270,14 +285,22 @@ public class BookManagerApp extends JFrame
 		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(txtPrice, gbc);
 		gbc = (GridBagConstraints) gbc.clone();
-		detailsPanel.add(txtPubDate, gbc);
+		detailsPanel.add(pnlDate, gbc);
 		
+		pnlControls.setName("pnlControls");
 		gbc = new GridBagConstraints();
 		gbc.gridx = 0;
 		gbc.gridy = 4;
 		gbc.gridwidth = 4;
 		gbc.fill = GridBagConstraints.BOTH;
 		detailsPanel.add(pnlControls, gbc);
+
+		txtPubDateDay.setColumns(2);
+		txtPubDateDay.addFocusListener(new MyFocusListener(txtPubDateDay, Calendar.DAY_OF_MONTH, null));
+		txtPubDateMonth.setColumns(2);
+		txtPubDateMonth.addFocusListener(new MyFocusListener(txtPubDateMonth, Calendar.MONTH, null));
+		txtPubDateYear.setColumns(4);
+		txtPubDateYear.addFocusListener(new MyFocusListener(txtPubDateYear, Calendar.YEAR, null));
 		
 		txtType.setEditable(false);
 		setDetailsVisible(false);
@@ -341,17 +364,15 @@ public class BookManagerApp extends JFrame
 	private void initListPane(JScrollPane listPane)
 	{
 		list = new JList<String>();
+		
 		listPane.setViewportView( list );
 
 		list.setFont(new Font("Arial", Font.PLAIN, 10));
 		list.getSelectionModel().addListSelectionListener(new ListSelectionListener()
 		{
-			
 			@Override
 			public void valueChanged(ListSelectionEvent e)
 			{
-				setFieldsEditable(false);
-				
 				if(list.getSelectedIndex() == -1) { // No item selected
 					setDetailsVisible(false);
 					for(Component component : detailsPanel.getComponents()) {
@@ -363,28 +384,60 @@ public class BookManagerApp extends JFrame
 					btnEdit.setEnabled(false);
 					btnRemove.setEnabled(false);
 				} else {
+					
+					if(true) {
+						list.setSelectedIndex(library.getItems().indexOf(lastBook));
+						setBookDate(txtField, fieldType, book);
+						lastBook = null;
+					}
+					
+					
+					
+					
+					// If you have a selected book
+					
+					Book book = library.getBook(list.getSelectedIndex());
+					if(book != null) {
+						txtPubDateYear.setText(getDateStr(book.getPubDate().get(Calendar.YEAR)));
+						txtPubDateMonth.setText(getDateStr(book.getPubDate().get(Calendar.MONTH)));
+						txtPubDateDay.setText(getDateStr(book.getPubDate().get(Calendar.DAY_OF_MONTH)));
+					}
 					setDetailsVisible(true);
 					btnEdit.setEnabled(true);
 					btnRemove.setEnabled(true);
+					lastBook = library.getBook(list.getSelectedIndex());
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
 				}
 			}
 		});
 	}
-	
-	private void showAbout()
+
+	private String getDateStr(int intDate)
 	{
-		JOptionPane.showMessageDialog(this, "Book Manager App Version 0.1"); //TODO version number from package?
+		return (intDate < 10) ? "0" + intDate : "" + intDate;
 	}
 	
 	private void addEditBook(int editingBook)
 	{
 		boolean edit = editingBook == EDIT_BOOK;
 		Book book = null, oldBook = null;
+		
 		if(edit) { // Need to get the default type
 			oldBook = library.getBook(list.getSelectedIndex());
 		}
 		String choice = (String) JOptionPane.showInputDialog(this, "Please select a book type:", "Type Selection", JOptionPane.PLAIN_MESSAGE, null, TYPES, (edit) ? oldBook.getType() : TYPES[0]);
-		if(choice!=null) { // Cancel not pressed
+		if(choice != null) { // Cancel not pressed
 			switch(choice) {
 				case "Fictional":	book = new FictionalBook();
 									break;
@@ -392,7 +445,7 @@ public class BookManagerApp extends JFrame
 									break;
 				case "Textbook":	book = new TextBook();
 			}
-			if(edit) {
+			if(edit) { // Need to get the fields from the original
 				book.setTitle(oldBook.getTitle());
 				book.setAuthor(oldBook.getAuthor());
 				book.setPublisher(oldBook.getPublisher());
@@ -403,7 +456,7 @@ public class BookManagerApp extends JFrame
 				library.removeBook(oldBook);
 			}
 			
-			if(book != null) {
+			if(book != null) { // book should never be null as we limit the options in the dropdown
 				library.addBook(book);
 				list.setSelectedIndex(list.getModel().getSize() -1);
 				setFieldsEditable(true);
@@ -473,9 +526,9 @@ public class BookManagerApp extends JFrame
     		String message = "Error opening file: ";
     		String extension = fileName.split("\\.")[1];
     		if(extension.equals("blf")) {
-    			message = message + "Library corrupt or deleted.";
+    			message += "Library corrupt or deleted.";
     		} else {
-    			message = message + "Not a Book Library File.";
+    			message += "Not a Book Library File.";
     		}
     		JOptionPane.showMessageDialog(this, message, "File Error", JOptionPane.WARNING_MESSAGE);
     		library.replaceBooks(books); // Reopen original library
@@ -484,33 +537,49 @@ public class BookManagerApp extends JFrame
 	
 	private void closeLibrary()
 	{
-		String message = "If you close the library you will lose any "
-				+ "unsaved changes! Do you wish to save?";
-		int choice = JOptionPane.showConfirmDialog(this, message, 
-				"Close Library", JOptionPane.YES_NO_CANCEL_OPTION);
-		
-		switch(choice) {
-			case JOptionPane.YES_OPTION:	selectFile(SAVE_DIALOG);
-			case JOptionPane.NO_OPTION:		library.replaceBooks(new ArrayList<Book>());
+		if(library.isEmpty()) {
+			JOptionPane.showMessageDialog(this, "You have no library open", "Empty library", JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			String message = "If you close the library you will lose any "
+					+ "unsaved changes! Do you wish to save?";
+			int choice = JOptionPane.showConfirmDialog(this, message, 
+					"Close Library", JOptionPane.YES_NO_CANCEL_OPTION);
+			
+			switch(choice) {
+				case JOptionPane.YES_OPTION:	selectFile(SAVE_DIALOG);
+				case JOptionPane.NO_OPTION:		library.replaceBooks(new ArrayList<Book>());
+			}
 		}
 	}
 	
-	// Convert the exception to a stack trace and display in a dialog
-	private void fatalException(Exception e)
+	private void setBookDate(JTextField field, int fieldType, Book book)
 	{
-		StringBuilder sb = new StringBuilder(e.toString());
-	    for (StackTraceElement ste : e.getStackTrace()) {
-	        sb.append("\n\tat ");
-	        sb.append(ste);
-	    }
-		JOptionPane.showMessageDialog(this, sb.toString(), "Fatal Error", JOptionPane.WARNING_MESSAGE);
-		System.exit(1);
+		boolean success = true;
+		GregorianCalendar temp = new GregorianCalendar();
+		
+		temp.setLenient(false);
+		try {
+			temp.set(fieldType, Integer.parseInt(field.getText()));
+		} catch(NumberFormatException e) {
+			success = false;
+			dateParseError(book);
+		}
+		try {
+			temp.getTime();
+		} catch(IllegalArgumentException e) {
+			success = false;
+			dateParseError(book);
+		}
+		if(success && book != null) {
+			book.getPubDate().set(fieldType, temp.get(fieldType));
+		}
 	}
 	
-	private void setDetailsVisible(boolean isVisible) {
+	private void setDetailsVisible(boolean isVisible)
+	{
 		for(Component component : detailsPanel.getComponents()) {
 			component.setVisible(isVisible);
-			if(component instanceof JPanel) {
+			if(component.getName() != null && component.getName().equals("pnlControls")) {
 				component.setVisible(true);
 			}
 		}
@@ -521,14 +590,44 @@ public class BookManagerApp extends JFrame
 		for(Component component : detailsPanel.getComponents()) {
 			if(component instanceof JTextField && !component.equals(txtType)) {
 				JTextField textField = (JTextField) component;
-				if(isEditable) {
-					textField.setEditable(true);
-				} else {
-					textField.setEditable(false);
+				textField.setEditable(isEditable);
+			}
+			if(component instanceof JPanel) {
+				JPanel panel = (JPanel) component; 
+				for(Component txtComponent : panel.getComponents()) {
+					if(txtComponent instanceof JTextField) {
+						JTextField textField = (JTextField) txtComponent;
+						textField.setEditable(isEditable);	
+					}
 				}
 			}
-		}
-		
+		}	
+	}
+	
+	private void showAbout()
+	{
+		JOptionPane.showMessageDialog(this, "Book Manager App Version 0.1"); //TODO version number from package?
+	}
+	
+	// Convert the exception to a stack trace and display in a dialog
+	private void fatalException(Exception e)
+	{
+		StringBuilder sb = new StringBuilder(e.toString());
+	    for (StackTraceElement ste : e.getStackTrace()) {
+	        sb.append("\n\tat ");
+	        sb.append(ste);
+	    }
+		JOptionPane.showMessageDialog(this, sb.toString(), "Fatal Error", JOptionPane.ERROR_MESSAGE);
+		System.exit(1);
+	}
+	
+	private void dateParseError(Book book)
+	{
+		txtPubDateYear.setText(book.getPubDate().get(Calendar.YEAR) + "");
+		txtPubDateMonth.setText(book.getPubDate().get(Calendar.MONTH) + "");
+		txtPubDateDay.setText(book.getPubDate().get(Calendar.DAY_OF_MONTH) + "");
+		String message = "Please enter in the correct format: DD-MM-YYYY\nThe book's date has not been updated!";
+		JOptionPane.showMessageDialog(this, message, "Date format error", JOptionPane.ERROR_MESSAGE);
 	}
 	
 	@SuppressWarnings("rawtypes")
@@ -566,19 +665,43 @@ public class BookManagerApp extends JFrame
 		AutoBinding<JList, Double, JTextField, String> autoBinding_4 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_4, txtPrice, jTextFieldBeanProperty_4);
 		autoBinding_4.bind();
 		//
-		BeanProperty<JList, String> jListBeanProperty_5 = BeanProperty.create("selectedElement.pubDate");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty_5 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_5, txtPubDate, jTextFieldBeanProperty_5);
-		autoBinding_5.bind();
-		//
-		BeanProperty<JList, String> jListBeanProperty_6 = BeanProperty.create("selectedElement.infoLabel");
+		BeanProperty<JList, String> jListBeanProperty_8 = BeanProperty.create("selectedElement.infoLabel");
 		BeanProperty<JLabel, String> jLabelBeanProperty = BeanProperty.create("text");
-		AutoBinding<JList, String, JLabel, String> autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_6, lblInfo, jLabelBeanProperty);
-		autoBinding_6.bind();
+		AutoBinding<JList, String, JLabel, String> autoBinding_8 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_8, lblInfo, jLabelBeanProperty);
+		autoBinding_8.bind();
 		//
-		BeanProperty<JList, String> jListBeanProperty_7 = BeanProperty.create("selectedElement.infoValue");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty_6 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_7, txtInfo, jTextFieldBeanProperty_6);
-		autoBinding_7.bind();
+		BeanProperty<JList, String> jListBeanProperty_9 = BeanProperty.create("selectedElement.infoValue");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty_9 = BeanProperty.create("text");
+		AutoBinding<JList, String, JTextField, String> autoBinding_9 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_9, txtInfo, jTextFieldBeanProperty_9);
+		autoBinding_9.bind();
+	}
+	
+	private class MyFocusListener implements FocusListener
+	{
+
+		JTextField txtField;
+		int fieldType;
+		Book book;
+		
+		public MyFocusListener(JTextField txtField, int fieldType, Book book)
+		{
+			this.txtField = txtField;
+			this.fieldType = fieldType;
+			this.book = book;
+		}
+		
+		@Override
+		public void focusGained(FocusEvent e)
+		{
+			book = library.getBook(list.getSelectedIndex());
+		}
+
+		@Override
+		public void focusLost(FocusEvent e)
+		{
+			setBookDate(txtField, fieldType, book);
+			book = null;
+		}
+		
 	}
 }
