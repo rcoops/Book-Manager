@@ -1,7 +1,9 @@
 package rcooper.bookmanager.model;
 
 import java.io.Serializable;
-import java.util.GregorianCalendar;
+import java.util.Date;
+
+import rcooper.bookmanager.model.components.AdditionalInfo;
 
 public abstract class Book extends AbstractModelObject implements Comparable<Book>, Serializable
 {
@@ -11,23 +13,22 @@ public abstract class Book extends AbstractModelObject implements Comparable<Boo
 	 */
 	private static final long serialVersionUID = 1L;
 	protected String type, title, author, publisher;
-	protected GregorianCalendar pubDate;
-	protected double price;
+	protected Date pubDate;
+	protected int priceInPence;
 	protected AdditionalInfo info;
 
 	public Book()
 	{
-		this("", "", "", new GregorianCalendar(), 0);
+		this("", "", "", new Date(), 0);
 	}
 	
-	public Book(String title, String author, String publisher,
-			GregorianCalendar pubDate, double price)
+	public Book(String title, String author, String publisher, Date pubDate, int priceInPence)
 	{
 		this.title = title;
 		this.author = author;
 		this.publisher = publisher;
 		this.pubDate = pubDate;
-		this.price = price;
+		this.priceInPence = priceInPence;
 		this.type = "";
 		this.info = new AdditionalInfo("", "");
 	}
@@ -70,14 +71,14 @@ public abstract class Book extends AbstractModelObject implements Comparable<Boo
 		return publisher;
 	}
 
-	public GregorianCalendar getPubDate()
+	public Date getPubDate()
 	{
 		return pubDate;
 	}
 
-	public double getPrice()
+	public int getPriceInPence()
 	{
-		return price;
+		return priceInPence;
 	}
 
 	@Override
@@ -94,7 +95,7 @@ public abstract class Book extends AbstractModelObject implements Comparable<Boo
 		sb.append(author + " ");
 		sb.append(publisher + " ");
 		sb.append(pubDate + " ");
-		sb.append(price + " ");
+		sb.append(priceInPence + " ");
 		return sb.toString() + info.toString();
 	}
 
@@ -128,16 +129,18 @@ public abstract class Book extends AbstractModelObject implements Comparable<Boo
 		firePropertyChange("publisher", old, this.publisher);
 	}
 	
-	public void setPubDate(GregorianCalendar pubDate)
+	public void setPubDate(Date pubDate)
 	{
+		Date old = this.pubDate;
 		this.pubDate = pubDate;
+		firePropertyChange("pubDate", old, this.pubDate);
 	}
 
-	public void setPrice(double price)
+	public void setPriceInPence(int priceInPence)
 	{
-		double old = this.price;
-		this.price = price;
-		firePropertyChange("price", old, this.price);
+		int old = this.priceInPence;
+		this.priceInPence = priceInPence;
+		firePropertyChange("priceInPence", old, this.priceInPence);
 	}
 
 	public void setInfoLabel(String label)

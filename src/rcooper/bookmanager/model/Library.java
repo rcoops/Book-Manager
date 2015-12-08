@@ -3,7 +3,10 @@ package rcooper.bookmanager.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Library extends AbstractModelObject implements Serializable
 {
@@ -20,9 +23,103 @@ public class Library extends AbstractModelObject implements Serializable
 	{
 		return items.size();
 	}
+	
+	public int getFictionalCount()
+	{
+		int count = 0;
+		for(Book book : items) {
+			if(book instanceof FictionalBook) {
+				count++;
+			}
+		}
+		return count;
+	}
+	
+	public int getHistoryCount()
+	{
+		int count = 0;
+		for(Book book : items) {
+			if(book instanceof HistoryBook) {
+				count++;
+			}
+		}
+		return count;
+	}
+	
+	public int getTextCount()
+	{
+		int count = 0;
+		for(Book book : items) {
+			if(book instanceof TextBook) {
+				count++;
+			}
+		}
+		return count;
+	}
 
 	public List<Book> getItems() {
 		return items;
+	}
+	
+	public List<String> getAuthors()
+	{
+		Set<String> authors = null;
+		if(!isEmpty()) {
+			authors = new HashSet<String>();
+			for(Book book : items) {
+				authors.add(book.getAuthor());
+			}
+		}
+		return new ArrayList<String>(authors);
+	}
+	
+	public List<String> getPublishers()
+	{
+		Set<String> publishers = null;
+		if(!isEmpty()) {
+			publishers = new HashSet<String>();
+			for(Book book : items) {
+				publishers.add(book.getPublisher());
+			}
+		}
+		return new ArrayList<String>(publishers);
+	}
+	
+	public List<Date> getDates()
+	{
+		List<Date> dates = null;
+		if(!isEmpty()) {
+			dates = new ArrayList<Date>();
+			for(Book book : items) {
+				dates.add(book.getPubDate());
+			}
+		}
+		return dates;
+	}
+	
+	public List<Book> getFilteredDates(Date startDate, Date endDate)
+	{
+		List<Book> books = new ArrayList<Book>();
+		for(Book book : items) {
+			Date date = book.getPubDate();
+			boolean beforeEnd = date.compareTo(endDate) == -1;
+			boolean afterStart = date.compareTo(startDate) > -1;
+			if( beforeEnd && afterStart ) {
+				books.add(book);
+			}
+		}
+		return books;
+	}
+	
+	public int getTotalPrices()
+	{
+		int total = 0;
+		if(!isEmpty()) {
+			for(Book book : items) {
+				total += book.getPriceInPence();
+			}
+		}
+		return total;
 	}
 	
 	public Book getBook(int index)
@@ -60,6 +157,18 @@ public class Library extends AbstractModelObject implements Serializable
 		firePropertyChange("itemsCount", oldValue.size(), items.size());
 	}
 	
+	public void addBook(int index, Book book)
+	{
+		if(index == -1) {
+			index++;
+		}
+		List<Book> oldValue = items;
+		items = new ArrayList<Book>(items);
+		items.add(index, book);
+		firePropertyChange("items", oldValue, items);
+		firePropertyChange("itemsCount", oldValue.size(), items.size());
+	}
+	
 	public void removeBook(Book book)
 	{
 		List<Book> oldValue = items;
@@ -78,17 +187,6 @@ public class Library extends AbstractModelObject implements Serializable
 		} catch( NullPointerException npe) {
 			firePropertyChange("itemsCount", 0, items.size());
 		}
-	}
-	
-	public double calculateTotalValue()
-	{
-		double total = 0;
-		
-		for(Book book : items) {
-			total += book.getPrice();
-		}
-		
-		return total;
 	}
 	
 	public void sortAscending()

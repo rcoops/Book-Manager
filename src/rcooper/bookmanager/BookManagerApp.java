@@ -6,18 +6,19 @@ import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -33,7 +34,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 import javax.swing.UIManager;
+import javax.swing.border.EtchedBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -46,7 +51,9 @@ import org.jdesktop.beansbinding.ELProperty;
 import org.jdesktop.swingbinding.JListBinding;
 import org.jdesktop.swingbinding.SwingBindings;
 
-import rcooper.bookmanager.components.JTextFieldLimited;
+import rcooper.bookmanager.converters.DateConverter;
+import rcooper.bookmanager.converters.ListDateConverter;
+import rcooper.bookmanager.converters.PriceConverter;
 import rcooper.bookmanager.model.Book;
 import rcooper.bookmanager.model.FictionalBook;
 import rcooper.bookmanager.model.HistoryBook;
@@ -56,18 +63,23 @@ import rcooper.bookmanager.model.TextBook;
 public class BookManagerApp extends JFrame
 {
 	
-	private static final long serialVersionUID = 1L;
-	private final int SAVE_DIALOG = 0, OPEN_DIALOG = 1, EDIT_BOOK = 2, ADD_BOOK = 3;
-	private final Object[] TYPES = {"Fictional", "History", "Textbook"};
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3904857322897679210L;
+	private final int SAVE_DIALOG = 0, OPEN_DIALOG = 1;
+	private final Object[] BOOK_TYPES = {"Fictional", "History", "Textbook"};
+	private final static String VERSION = "0.7";
 	
 	private JPanel detailsPanel;
-	private JLabel lblInfo;
-	private JTextField txtTitle, txtAuthor, txtPublisher, txtPubDateYear, txtPubDateMonth, txtPubDateDay, txtPrice, txtInfo, txtType;
-	private JList<String> list;
+	private JLabel lblInfo, valTotalBooks, valTotalVal, valTotalFict, valTotalHist, valTotalText;
+	private JTextField txtTitle, txtAuthor, txtPublisher, txtPrice, txtInfo, txtType, txtPubDate;
+	private JList<String> list, lstAuthors, lstPublishers;
+	private JList<Date> lstPubDates;
 	private JButton btnAdd, btnEdit, btnRemove;
+	private JListBinding<Book, Library, JList> jListBinding;
 	private Library library;
 	
-	private Book lastBook;
 	
 	public static void main(String[] args)
 	{
@@ -85,12 +97,13 @@ public class BookManagerApp extends JFrame
 		});
 	}
 	
+	@SuppressWarnings("deprecation")
 	public BookManagerApp()
 	{
 		library = new Library();
-		library.addBook(new FictionalBook("The Colour of Magic", "Terry Pratchett", "Corgi", new GregorianCalendar(1984, 1, 18), 5.50 , "Fantasy/Comedy"));
-		library.addBook(new TextBook("Objects First with Java", "David Barnes & Michael Kölling", "Pearson", new GregorianCalendar(2011, 9, 30), 59.99 , "Java Programming"));
-		library.addBook(new HistoryBook("SPQR: A history of Ancient Rome", "Professor Mary Beard", "Profile Books", new GregorianCalendar(2015, 10, 20), 17.00 , "Ancient History"));
+		library.addBook(new FictionalBook("The Colour of Magic", "Terry Pratchett", "Corgi", new Date(84, 1, 18), 550 , "Fantasy/Comedy"));
+		library.addBook(new TextBook("Objects First with Java", "David Barnes & Michael Kölling", "Pearson", new Date(111, 9, 30), 5999 , "Java Programming"));
+		library.addBook(new HistoryBook("SPQR: A history of Ancient Rome", "Professor Mary Beard", "Profile Books", new Date(115, 10, 20), 1700 , "Ancient History"));
 		init(new JTabbedPane(), new JMenuBar()); 
 		
 		pack();
@@ -108,15 +121,15 @@ public class BookManagerApp extends JFrame
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setJMenuBar(menuBar);
 		setContentPane(mainPane);
-		initMenu(menuBar); // app.menuBar setup
 		initTabs(mainPane); // app.tabbedPane setup
+		initMenu(menuBar); // app.menuBar setup
 	}
 	
 	private void initMenu(JMenuBar menuBar)
 	{
-		
 		//// Menu bar menus ////
 		JMenu mnFile = new JMenu("File");
+		JMenu mnSearch = new JMenu("Search");
 		JMenu mnHelp = new JMenu("Help");
 		
 		//// File menu items ////
@@ -124,12 +137,17 @@ public class BookManagerApp extends JFrame
 		JMenuItem mnISave = new JMenuItem("Save");
 		JMenuItem mnIClose = new JMenuItem("Close");
 		
+		//// Search menu item ////
+		JMenuItem mnIApplyFilter = new JMenuItem("Apply Filter");
+		JMenuItem mnIRemoveFilter = new JMenuItem("Remove Filter");
+		
 		//// Help menu items ////
 		JMenuItem mnIReadMe = new JMenuItem("View Help");
 		JMenuItem mnIAbout = new JMenuItem("About Book Manager");
 		
 		//// app.menuBar setup ////
 		menuBar.add(mnFile);
+		menuBar.add(mnSearch);
 		menuBar.add(Box.createHorizontalGlue());
 		menuBar.add(mnHelp);
 		
@@ -137,54 +155,18 @@ public class BookManagerApp extends JFrame
 		mnFile.add(mnIOpen);
 		mnFile.add(mnISave);
 		mnFile.add(mnIClose);
+
+		//// app.menuBar.file setup ////
+		mnSearch.add(mnIApplyFilter);
+		mnSearch.add(mnIRemoveFilter);
 		
 		//// app.menuBar.help setup ////
 		mnHelp.add(mnIReadMe);
 		mnHelp.add(mnIAbout);
-
-		mnIAbout.addActionListener(new ActionListener()
-		{
-			
-			@Override
-			public void actionPerformed( ActionEvent e )
-			{
-				showAbout();
-			}
-			
-		});
 		
-		mnISave.addActionListener(new ActionListener()
-		{
-
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				selectFile(SAVE_DIALOG);
-			}
-			
-		});
 		
-		mnIOpen.addActionListener(new ActionListener()
-		{
-
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				selectFile(OPEN_DIALOG);
-			}
-			
-		});
 		
-		mnIClose.addActionListener(new ActionListener()
-		{
-			
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				closeLibrary();
-			}
-			
-		});
+		initActionListeners(mnIOpen, mnISave, mnIClose, mnIApplyFilter, mnIRemoveFilter, mnIReadMe, mnIAbout);
 	}
 	
 	private void initTabs(JTabbedPane mainPane)
@@ -195,10 +177,11 @@ public class BookManagerApp extends JFrame
 		mainPane.addTab("Details View", detailsView);
 		mainPane.addTab("Report View", reportView);
 		
-		initDetailsView(detailsView, reportView);
+		initDetailsView(detailsView);
+		initReportView(reportView);
 	}
 	
-	private void initDetailsView(JSplitPane detailsView, JPanel reportView)
+	private void initDetailsView(JSplitPane detailsView)
 	{
 		detailsPanel = new JPanel();
 		JScrollPane listPane = new JScrollPane();
@@ -213,6 +196,194 @@ public class BookManagerApp extends JFrame
 		initDetailsPanel();
 	}
 	
+	private void initReportView(JPanel reportView)
+	{
+		lstAuthors = new JList<String>();
+		lstPublishers = new JList<String>();
+		lstPubDates = new JList<Date>();
+		valTotalBooks = new JLabel("totalBooks");
+		valTotalFict = new JLabel("totalFict");
+		valTotalHist = new JLabel("totalHist");
+		valTotalText = new JLabel("totalText");
+		valTotalVal = new JLabel("totalVal");
+		
+		Font lblFont = new Font("Arial", Font.BOLD, 12);
+		Font valFont = new Font("Arial", Font.PLAIN, 12);
+		GridBagLayout gbl_reportView = new GridBagLayout();
+		JScrollPane scrAuthors = new JScrollPane();
+		JScrollPane scrPublishers = new JScrollPane();
+		JScrollPane scrDates = new JScrollPane();
+		JLabel lblAuthors = new JLabel("Authors");
+		JLabel lblPublishers = new JLabel("Publishers");
+		JLabel lblDates = new JLabel("Dates");
+		JLabel lblTotalBooks = new JLabel("Total No. of Books:");
+		JLabel lblTotalFict = new JLabel("Total No. of Fictional Books:");
+		JLabel lblTotalHistory = new JLabel("Total No. of History Books:");
+		JLabel lblTotalText = new JLabel("Total No. of Text Books:");
+		JLabel lblTotalValue = new JLabel("Total Value of all Books:");
+
+		reportView.setLayout(gbl_reportView);
+		
+		GridBagConstraints gbc_scrAuthors = new GridBagConstraints();
+		gbc_scrAuthors.weighty = 1.0;
+		gbc_scrAuthors.insets = new Insets(0, 0, 0, 5);
+		gbc_scrAuthors.gridheight = 5;
+		gbc_scrAuthors.fill = GridBagConstraints.BOTH;
+		gbc_scrAuthors.weightx = 0.2;
+		gbc_scrAuthors.gridx = 0;
+		gbc_scrAuthors.gridy = 0;
+		reportView.add(scrAuthors, gbc_scrAuthors);
+		
+		GridBagConstraints gbc_scrPublishers = new GridBagConstraints();
+		gbc_scrPublishers.weighty = 1.0;
+		gbc_scrPublishers.insets = new Insets(0, 0, 0, 5);
+		gbc_scrPublishers.weightx = 0.1;
+		gbc_scrPublishers.gridheight = 5;
+		gbc_scrPublishers.fill = GridBagConstraints.BOTH;
+		gbc_scrPublishers.gridx = 1;
+		gbc_scrPublishers.gridy = 0;
+		reportView.add(scrPublishers, gbc_scrPublishers);
+		
+		GridBagConstraints gbc_scrollPane = new GridBagConstraints();
+		gbc_scrollPane.weighty = 0.2;
+		gbc_scrollPane.weightx = 0.2;
+		gbc_scrollPane.gridheight = 5;
+		gbc_scrollPane.insets = new Insets(0, 0, 0, 5);
+		gbc_scrollPane.fill = GridBagConstraints.BOTH;
+		gbc_scrollPane.gridx = 2;
+		gbc_scrollPane.gridy = 0;
+		reportView.add(scrDates, gbc_scrollPane);
+		
+		GridBagConstraints gbc_lblTotalBooks = new GridBagConstraints();
+		gbc_lblTotalBooks.anchor = GridBagConstraints.LINE_END;
+		gbc_lblTotalBooks.weighty = 0.2;
+		gbc_lblTotalBooks.weightx = 0.2;
+		gbc_lblTotalBooks.insets = new Insets(0, 0, 5, 5);
+		gbc_lblTotalBooks.gridx = 3;
+		gbc_lblTotalBooks.gridy = 0;
+		reportView.add(lblTotalBooks, gbc_lblTotalBooks);
+		
+		GridBagConstraints gbc_valTotalbooks = new GridBagConstraints();
+		gbc_valTotalbooks.fill = GridBagConstraints.HORIZONTAL;
+		gbc_valTotalbooks.anchor = GridBagConstraints.LINE_START;
+		gbc_valTotalbooks.weighty = 0.2;
+		gbc_valTotalbooks.weightx = 0.2;
+		gbc_valTotalbooks.insets = new Insets(0, 0, 5, 0);
+		gbc_valTotalbooks.gridx = 4;
+		gbc_valTotalbooks.gridy = 0;
+		reportView.add(valTotalBooks, gbc_valTotalbooks);
+		
+		GridBagConstraints gbc_lblTotalFict = new GridBagConstraints();
+		gbc_lblTotalFict.anchor = GridBagConstraints.LINE_END;
+		gbc_lblTotalFict.weighty = 0.2;
+		gbc_lblTotalFict.weightx = 0.2;
+		gbc_lblTotalFict.insets = new Insets(0, 0, 5, 5);
+		gbc_lblTotalFict.gridx = 3;
+		gbc_lblTotalFict.gridy = 1;
+		reportView.add(lblTotalFict, gbc_lblTotalFict);
+		
+		GridBagConstraints gbc_valTotalFict = new GridBagConstraints();
+		gbc_valTotalFict.fill = GridBagConstraints.HORIZONTAL;
+		gbc_valTotalFict.anchor = GridBagConstraints.LINE_START;
+		gbc_valTotalFict.weightx = 0.2;
+		gbc_valTotalFict.weighty = 0.2;
+		gbc_valTotalFict.insets = new Insets(0, 0, 5, 0);
+		gbc_valTotalFict.gridx = 4;
+		gbc_valTotalFict.gridy = 1;
+		reportView.add(valTotalFict, gbc_valTotalFict);
+		
+		GridBagConstraints gbc_lblTotalHistory = new GridBagConstraints();
+		gbc_lblTotalHistory.anchor = GridBagConstraints.LINE_END;
+		gbc_lblTotalHistory.weighty = 0.2;
+		gbc_lblTotalHistory.weightx = 0.2;
+		gbc_lblTotalHistory.insets = new Insets(0, 0, 5, 5);
+		gbc_lblTotalHistory.gridx = 3;
+		gbc_lblTotalHistory.gridy = 2;
+		reportView.add(lblTotalHistory, gbc_lblTotalHistory);
+		
+		GridBagConstraints gbc_valTotalHist = new GridBagConstraints();
+		gbc_valTotalHist.fill = GridBagConstraints.HORIZONTAL;
+		gbc_valTotalHist.anchor = GridBagConstraints.LINE_START;
+		gbc_valTotalHist.weighty = 0.2;
+		gbc_valTotalHist.weightx = 0.2;
+		gbc_valTotalHist.insets = new Insets(0, 0, 5, 0);
+		gbc_valTotalHist.gridx = 4;
+		gbc_valTotalHist.gridy = 2;
+		reportView.add(valTotalHist, gbc_valTotalHist);
+		
+		GridBagConstraints gbc_lblTotalText = new GridBagConstraints();
+		gbc_lblTotalText.anchor = GridBagConstraints.LINE_END;
+		gbc_lblTotalText.weighty = 0.2;
+		gbc_lblTotalText.weightx = 0.2;
+		gbc_lblTotalText.insets = new Insets(0, 0, 5, 5);
+		gbc_lblTotalText.gridx = 3;
+		gbc_lblTotalText.gridy = 3;
+		reportView.add(lblTotalText, gbc_lblTotalText);
+		
+		GridBagConstraints gbc_valTotalText = new GridBagConstraints();
+		gbc_valTotalText.anchor = GridBagConstraints.LINE_START;
+		gbc_valTotalText.fill = GridBagConstraints.HORIZONTAL;
+		gbc_valTotalText.weighty = 0.2;
+		gbc_valTotalText.weightx = 0.2;
+		gbc_valTotalText.insets = new Insets(0, 0, 5, 0);
+		gbc_valTotalText.gridx = 4;
+		gbc_valTotalText.gridy = 3;
+		reportView.add(valTotalText, gbc_valTotalText);
+		
+		GridBagConstraints gbc_lblTotalValue = new GridBagConstraints();
+		gbc_lblTotalValue.anchor = GridBagConstraints.LINE_END;
+		gbc_lblTotalValue.weighty = 0.2;
+		gbc_lblTotalValue.weightx = 0.2;
+		gbc_lblTotalValue.insets = new Insets(0, 0, 0, 5);
+		gbc_lblTotalValue.gridx = 3;
+		gbc_lblTotalValue.gridy = 4;
+		reportView.add(lblTotalValue, gbc_lblTotalValue);
+		
+		GridBagConstraints gbc_valTotalVal = new GridBagConstraints();
+		gbc_valTotalVal.anchor = GridBagConstraints.LINE_START;
+		gbc_valTotalVal.fill = GridBagConstraints.HORIZONTAL;
+		gbc_valTotalVal.weighty = 0.2;
+		gbc_valTotalVal.weightx = 0.2;
+		gbc_valTotalVal.gridx = 4;
+		gbc_valTotalVal.gridy = 4;
+		reportView.add(valTotalVal, gbc_valTotalVal);
+
+		valTotalBooks.setFont(valFont);
+		valTotalBooks.setHorizontalAlignment(SwingConstants.CENTER);
+		valTotalBooks.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
+		valTotalFict.setFont(valFont);
+		valTotalFict.setHorizontalAlignment(SwingConstants.CENTER);
+		valTotalFict.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
+		valTotalHist.setFont(valFont);
+		valTotalHist.setHorizontalAlignment(SwingConstants.CENTER);
+		valTotalHist.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
+		valTotalText.setFont(valFont);
+		valTotalText.setHorizontalAlignment(SwingConstants.CENTER);
+		valTotalText.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
+		valTotalVal.setFont(valFont);
+		valTotalVal.setHorizontalAlignment(SwingConstants.CENTER);
+		valTotalVal.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
+
+		lblAuthors.setFont(new Font("Arial", Font.PLAIN, 14));
+		lblAuthors.setHorizontalAlignment(SwingConstants.CENTER);
+		lblPublishers.setFont(new Font("Arial", Font.PLAIN, 14));
+		lblPublishers.setHorizontalAlignment(SwingConstants.CENTER);
+		lblDates.setFont(new Font("Arial", Font.PLAIN, 14));
+		lblDates.setHorizontalAlignment(SwingConstants.CENTER);
+		lblTotalBooks.setFont(lblFont);
+		lblTotalFict.setFont(lblFont);
+		lblTotalHistory.setFont(lblFont);
+		lblTotalText.setFont(lblFont);
+		lblTotalValue.setFont(lblFont);
+
+		scrAuthors.setColumnHeaderView(lblAuthors);
+		scrAuthors.setViewportView(lstAuthors);
+		scrPublishers.setColumnHeaderView(lblPublishers);
+		scrPublishers.setViewportView(lstPublishers);
+		scrDates.setColumnHeaderView(lblDates);
+		scrDates.setViewportView(lstPubDates);
+	}
+	
 	private void initDetailsPanel()
 	{
 		JLabel lblType = new JLabel("Type:");
@@ -221,35 +392,29 @@ public class BookManagerApp extends JFrame
 		JLabel lblPublisher = new JLabel("Publisher:");
 		JLabel lblPubDate = new JLabel("Publication Date:");
 		JLabel lblPrice = new JLabel("Retail Price:");
-		JLabel lblSeparator1 = new JLabel("/");
-		JLabel lblSeparator2 = new JLabel("/");
 		JPanel pnlControls = new JPanel(new GridBagLayout());
-		JPanel pnlDate = new JPanel();
+		GridBagLayout layout = new GridBagLayout();
+		GridBagConstraints gbc = new GridBagConstraints();
 		lblInfo = new JLabel();
 		txtType = new JTextField();
 		txtTitle = new JTextField();
 		txtAuthor = new JTextField();
 		txtPublisher = new JTextField();
-		txtPubDateYear = new JTextFieldLimited(4);
-		txtPubDateMonth = new JTextFieldLimited(2);
-		txtPubDateDay = new JTextFieldLimited(2);
+		txtPubDate = new JTextField();
 		txtPrice = new JTextField();
 		txtInfo = new JTextField();
-
-		GridBagLayout layout = new GridBagLayout();
+		
 		layout.columnWeights = new double[] {0.15, 0.4, 0.3, 0.15};
 		layout.rowWeights = new double[] {0.2, 0.2, 0.2, 0.2, 0.2};
 		detailsPanel.setLayout(layout);
-		GridBagConstraints gbc = new GridBagConstraints();
+		
 		gbc.anchor = GridBagConstraints.EAST;
 		gbc.gridx = 0;
-		//gbc.gridy = GridBagConstraints.RELATIVE;
 		detailsPanel.add(lblTitle, gbc);
 		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(lblAuthor, gbc);
 		gbc = (GridBagConstraints) gbc.clone();
-		detailsPanel.add(lblPublisher, gbc);
-		gbc = (GridBagConstraints) gbc.clone();
+		detailsPanel.add(lblPubDate, gbc);
 		detailsPanel.add(lblInfo, gbc);
 		gbc = (GridBagConstraints) gbc.clone();
 		gbc.gridx = 2;
@@ -257,7 +422,7 @@ public class BookManagerApp extends JFrame
 		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(lblPrice, gbc);
 		gbc = (GridBagConstraints) gbc.clone();
-		detailsPanel.add(lblPubDate, gbc);
+		detailsPanel.add(lblPublisher, gbc);
 
 		gbc = (GridBagConstraints) gbc.clone();
 		gbc.anchor = GridBagConstraints.WEST;
@@ -267,17 +432,10 @@ public class BookManagerApp extends JFrame
 		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(txtAuthor, gbc);
 		gbc = (GridBagConstraints) gbc.clone();
-		detailsPanel.add(txtPublisher, gbc);
+		detailsPanel.add(txtPubDate, gbc);
 		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(txtInfo, gbc);
-		
-		
-		
-		pnlDate.add(txtPubDateDay);
-		pnlDate.add(lblSeparator1);
-		pnlDate.add(txtPubDateMonth);
-		pnlDate.add(lblSeparator2);
-		pnlDate.add(txtPubDateYear);
+
 		gbc = (GridBagConstraints) gbc.clone();
 		gbc.insets = new Insets(0,0,0,35);
 		gbc.gridx = 3;
@@ -285,22 +443,14 @@ public class BookManagerApp extends JFrame
 		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(txtPrice, gbc);
 		gbc = (GridBagConstraints) gbc.clone();
-		detailsPanel.add(pnlDate, gbc);
+		detailsPanel.add(txtPublisher, gbc);
 		
-		pnlControls.setName("pnlControls");
 		gbc = new GridBagConstraints();
 		gbc.gridx = 0;
 		gbc.gridy = 4;
 		gbc.gridwidth = 4;
 		gbc.fill = GridBagConstraints.BOTH;
 		detailsPanel.add(pnlControls, gbc);
-
-		txtPubDateDay.setColumns(2);
-		txtPubDateDay.addFocusListener(new MyFocusListener(txtPubDateDay, Calendar.DAY_OF_MONTH, null));
-		txtPubDateMonth.setColumns(2);
-		txtPubDateMonth.addFocusListener(new MyFocusListener(txtPubDateMonth, Calendar.MONTH, null));
-		txtPubDateYear.setColumns(4);
-		txtPubDateYear.addFocusListener(new MyFocusListener(txtPubDateYear, Calendar.YEAR, null));
 		
 		txtType.setEditable(false);
 		setDetailsVisible(false);
@@ -315,50 +465,125 @@ public class BookManagerApp extends JFrame
 		btnRemove = new JButton("Remove");
 		
 		Insets buttonInsets = new Insets(10, 20, 10, 20);
+		
 		btnAdd.setMargin(buttonInsets);
-		btnAdd.addActionListener(new ActionListener()
-		{
-			
-			public void actionPerformed(ActionEvent e)
-			{
-				// Don't use ADD_BOOK but easier to see what's happening
-				addEditBook(ADD_BOOK); 
-			}
-			
-		});
-		
-		btnEdit.setMargin(buttonInsets);
-		btnEdit.addActionListener(new ActionListener()
-		{
-			
-			public void actionPerformed(ActionEvent e)
-			{
-				addEditBook(EDIT_BOOK);
-			}
-			
-		});
-		
-		btnRemove.setMargin(buttonInsets);
-		btnRemove.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				removeBook();
-			}
-			
-		});
-		
 		btnEdit.setEnabled(false);
+		btnEdit.setMargin(buttonInsets);
+		btnRemove.setMargin(buttonInsets);
 		btnRemove.setEnabled(false);
+		
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.weightx = 0.3;
 		pnlControls.add(btnAdd, gbc);
 		gbc = (GridBagConstraints) gbc.clone();
-		gbc.gridx = 1;
 		pnlControls.add(btnEdit, gbc);
 		gbc = (GridBagConstraints) gbc.clone();
-		gbc.gridx = 2;
 		pnlControls.add(btnRemove, gbc);
+	}
+	
+	private void initActionListeners(JMenuItem mnIOpen, JMenuItem mnISave, JMenuItem mnIClose, JMenuItem mnIApplyFilter, JMenuItem mnIRemoveFilter, JMenuItem mnIReadMe, JMenuItem mnIAbout)
+	{
+		mnISave.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				selectFile(SAVE_DIALOG);
+			}
+		});
+		
+		mnIOpen.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				selectFile(OPEN_DIALOG);
+			}
+		});
+		
+		mnIClose.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				closeLibrary();
+			}
+		});
+
+		mnIApplyFilter.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				applyFilter();
+			}
+		});
+
+		mnIRemoveFilter.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				removeFilter();
+			}
+		});
+
+		mnIReadMe.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				
+			}
+		});
+
+		mnIAbout.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				showAbout();
+			}
+		});
+		
+		btnAdd.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				int index = list.getSelectedIndex();
+				if(list.isSelectionEmpty()) {
+					index++;
+				}
+				addBook(index, BOOK_TYPES[0]);
+			}
+		});
+		
+		btnEdit.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				setFieldsEditable(true);;
+			}
+		});
+		
+		
+		btnRemove.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				removeBook();
+			}
+		});
+		
+		list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent e)
+			{
+				setFieldsEditable(false);
+				if(!list.isSelectionEmpty()) {
+					setDetailsVisible(true);
+					btnEdit.setEnabled(true);
+					btnRemove.setEnabled(true);
+				} else {
+					setDetailsVisible(false);
+					btnEdit.setEnabled(false);
+					btnRemove.setEnabled(false);
+				}
+			}
+		});
 	}
 	
 	private void initListPane(JScrollPane listPane)
@@ -366,114 +591,129 @@ public class BookManagerApp extends JFrame
 		list = new JList<String>();
 		
 		listPane.setViewportView( list );
-
+		listPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		
+		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.setFont(new Font("Arial", Font.PLAIN, 10));
-		list.getSelectionModel().addListSelectionListener(new ListSelectionListener()
-		{
-			@Override
-			public void valueChanged(ListSelectionEvent e)
-			{
-				if(list.getSelectedIndex() == -1) { // No item selected
-					setDetailsVisible(false);
-					for(Component component : detailsPanel.getComponents()) {
-						if( component instanceof JTextField) {
-							JTextField textField = (JTextField) component;
-							textField.setText("");
-						}
-					}
-					btnEdit.setEnabled(false);
-					btnRemove.setEnabled(false);
-				} else {
-					
-					if(true) {
-						list.setSelectedIndex(library.getItems().indexOf(lastBook));
-						setBookDate(txtField, fieldType, book);
-						lastBook = null;
-					}
-					
-					
-					
-					
-					// If you have a selected book
-					
-					Book book = library.getBook(list.getSelectedIndex());
-					if(book != null) {
-						txtPubDateYear.setText(getDateStr(book.getPubDate().get(Calendar.YEAR)));
-						txtPubDateMonth.setText(getDateStr(book.getPubDate().get(Calendar.MONTH)));
-						txtPubDateDay.setText(getDateStr(book.getPubDate().get(Calendar.DAY_OF_MONTH)));
-					}
-					setDetailsVisible(true);
-					btnEdit.setEnabled(true);
-					btnRemove.setEnabled(true);
-					lastBook = library.getBook(list.getSelectedIndex());
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
-				}
-			}
-		});
-	}
-
-	private String getDateStr(int intDate)
-	{
-		return (intDate < 10) ? "0" + intDate : "" + intDate;
 	}
 	
-	private void addEditBook(int editingBook)
+	private Book addBook(int index, Object booktype)
 	{
-		boolean edit = editingBook == EDIT_BOOK;
-		Book book = null, oldBook = null;
-		
-		if(edit) { // Need to get the default type
-			oldBook = library.getBook(list.getSelectedIndex());
-		}
-		String choice = (String) JOptionPane.showInputDialog(this, "Please select a book type:", "Type Selection", JOptionPane.PLAIN_MESSAGE, null, TYPES, (edit) ? oldBook.getType() : TYPES[0]);
+		Book book = null;
+		String choice = (String) JOptionPane.showInputDialog(this, "Please select a book type:", "Type Selection", JOptionPane.PLAIN_MESSAGE, null, BOOK_TYPES, booktype);
 		if(choice != null) { // Cancel not pressed
 			switch(choice) {
-				case "Fictional":	book = new FictionalBook();
-									break;
-				case "History":		book = new HistoryBook();
-									break;
-				case "Textbook":	book = new TextBook();
-			}
-			if(edit) { // Need to get the fields from the original
-				book.setTitle(oldBook.getTitle());
-				book.setAuthor(oldBook.getAuthor());
-				book.setPublisher(oldBook.getPublisher());
-				book.setPubDate(oldBook.getPubDate());
-				book.setPrice(oldBook.getPrice());
-				book.setInfoValue(oldBook.getInfoValue());
-				txtInfo.setText("");
-				library.removeBook(oldBook);
+			case "Fictional":
+				book = new FictionalBook();
+				break;
+			case "History":
+				book = new HistoryBook();
+				break;
+			case "Textbook":
+				book = new TextBook();
+				break;
 			}
 			
-			if(book != null) { // book should never be null as we limit the options in the dropdown
-				library.addBook(book);
-				list.setSelectedIndex(list.getModel().getSize() -1);
-				setFieldsEditable(true);
-			}
+			library.addBook(index, book);
+			list.setSelectedIndex(index);
+			setFieldsEditable(true);
 		}
+		return book;
 	}
 	
 	private void removeBook()
 	{
+		int currentIndex = list.getSelectedIndex();
 		Object[] options = {"Confirm", "Cancel"};
 		int option = JOptionPane.showOptionDialog(this, "Are you sure you want to remove this book?", "Remove Book", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
 		if(option == JOptionPane.YES_OPTION) {
-			if (list.getSelectedIndex() > -1) { // Shouldn't happen
-				library.removeBook(library.getItems().get(list.getSelectedIndex()));
-			}
-			list.setSelectedIndex(list.getModel().getSize() -1);
+			library.removeBook(library.getBook(currentIndex));
+			list.setSelectedIndex(currentIndex);
 		}
+		if(!library.isEmpty()) {
+			list.setSelectedIndex(currentIndex-1);
+		}
+	}
+	
+	private void applyFilter()
+	{
+		String message = "Please enter a start date and an end date. Leave the end date blank to search to the current day.";
+		JPanel mainPanel = new JPanel(new GridLayout(2,0));
+		JPanel optionPanel = new JPanel(new GridLayout(0,3));
+		JLabel dash = new JLabel("-");
+		dash.setHorizontalAlignment(SwingConstants.CENTER);
+		JTextField txtStartDate = new JTextField();
+		JTextField txtEndDate = new JTextField();
+		optionPanel.add(new JLabel("Start Date (dd/mm/yyyy):"));
+		optionPanel.add(Box.createHorizontalStrut(5));
+		optionPanel.add(new JLabel("End Date (dd/mm/yyyy):"));
+		optionPanel.add(txtStartDate);
+		optionPanel.add(dash);
+		optionPanel.add(txtEndDate);
+		mainPanel.add(new JLabel(message));
+		mainPanel.add(optionPanel);
+		Object[] options = new Object[] {"OK", "Cancel"};
+		int option = JOptionPane.showOptionDialog(this, mainPanel, "Pick Date Range", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+		if(option == JOptionPane.YES_OPTION) {
+			Date startDate = getDateFromString(txtStartDate.getText(), false);
+			Date endDate = getDateFromString(txtEndDate.getText(), true);
+			Date now = new Date();
+			if(startDate != null) {
+				if(startDate.compareTo(now) < 1) {
+					if(jListBinding.isBound()) {
+						jListBinding.unbind();
+					}
+					setListData(library.getFilteredDates(startDate, endDate));
+				} else {
+					dateErrorDialog();
+				}
+			}
+		}
+	}
+	
+	private void setListData(List<Book> filteredList)
+	{
+		String[] data = new String[filteredList.size()];
+		for(int i = 0; i < data.length; i++) {
+			data[i] = filteredList.get(i).getTitle() + " - " + filteredList.get(i).getAuthor(); 
+		}
+		list.setListData(data);
+	}
+	
+	private Date getDateFromString(String strDate, boolean isEnd)
+	{
+		Date date = null;
+		if(!strDate.isEmpty()) {
+			String[] strDates = strDate.split("/");
+			int[] intDates = new int[3];
+			if(strDates.length == 3) {
+				try {
+					for(int i = 0; i < strDates.length; i++) {
+						intDates[i] = Integer.parseInt(strDates[i]);
+					}
+					date = new Date((intDates[2] - 1900), (intDates[1] - 1), intDates[0]);
+				} catch(NumberFormatException e) {
+					dateErrorDialog();
+				}
+			} else {
+				dateErrorDialog();
+			}
+		} else if(isEnd) {
+			date = new Date();
+		}
+		return date;
+	}
+	
+	private void removeFilter()
+	{
+		if(!jListBinding.isBound()) {
+			jListBinding.bind();
+		}
+	}
+	private void dateErrorDialog()
+	{
+		String message = "Dates must be entered in dd/mm/yyyy format.\nPlease try again.";
+		JOptionPane.showMessageDialog(this, message, "Date Error", JOptionPane.ERROR_MESSAGE);
 	}
 	
 	private void selectFile(int dialogChoice)
@@ -501,8 +741,6 @@ public class BookManagerApp extends JFrame
 	    	} else if(dialogChoice == OPEN_DIALOG) {
 	    		openLibrary(lrw, path, file.getName());
 	    	}
-	    } else {
-	    	//TODO log file?
 	    }
 	}
 	
@@ -546,41 +784,21 @@ public class BookManagerApp extends JFrame
 					"Close Library", JOptionPane.YES_NO_CANCEL_OPTION);
 			
 			switch(choice) {
-				case JOptionPane.YES_OPTION:	selectFile(SAVE_DIALOG);
-				case JOptionPane.NO_OPTION:		library.replaceBooks(new ArrayList<Book>());
+			case JOptionPane.YES_OPTION:
+				selectFile(SAVE_DIALOG);
+				/* falls through */
+			case JOptionPane.NO_OPTION:
+				library.replaceBooks(new ArrayList<Book>());
+				break;
 			}
-		}
-	}
-	
-	private void setBookDate(JTextField field, int fieldType, Book book)
-	{
-		boolean success = true;
-		GregorianCalendar temp = new GregorianCalendar();
-		
-		temp.setLenient(false);
-		try {
-			temp.set(fieldType, Integer.parseInt(field.getText()));
-		} catch(NumberFormatException e) {
-			success = false;
-			dateParseError(book);
-		}
-		try {
-			temp.getTime();
-		} catch(IllegalArgumentException e) {
-			success = false;
-			dateParseError(book);
-		}
-		if(success && book != null) {
-			book.getPubDate().set(fieldType, temp.get(fieldType));
 		}
 	}
 	
 	private void setDetailsVisible(boolean isVisible)
 	{
 		for(Component component : detailsPanel.getComponents()) {
-			component.setVisible(isVisible);
-			if(component.getName() != null && component.getName().equals("pnlControls")) {
-				component.setVisible(true);
+			if(!(component instanceof JPanel)) {
+				component.setVisible(isVisible);
 			}
 		}
 	}
@@ -592,21 +810,12 @@ public class BookManagerApp extends JFrame
 				JTextField textField = (JTextField) component;
 				textField.setEditable(isEditable);
 			}
-			if(component instanceof JPanel) {
-				JPanel panel = (JPanel) component; 
-				for(Component txtComponent : panel.getComponents()) {
-					if(txtComponent instanceof JTextField) {
-						JTextField textField = (JTextField) txtComponent;
-						textField.setEditable(isEditable);	
-					}
-				}
-			}
 		}	
 	}
 	
 	private void showAbout()
 	{
-		JOptionPane.showMessageDialog(this, "Book Manager App Version 0.1"); //TODO version number from package?
+		JOptionPane.showMessageDialog(this, "Book Manager App Version 0.7");
 	}
 	
 	// Convert the exception to a stack trace and display in a dialog
@@ -621,87 +830,88 @@ public class BookManagerApp extends JFrame
 		System.exit(1);
 	}
 	
-	private void dateParseError(Book book)
-	{
-		txtPubDateYear.setText(book.getPubDate().get(Calendar.YEAR) + "");
-		txtPubDateMonth.setText(book.getPubDate().get(Calendar.MONTH) + "");
-		txtPubDateDay.setText(book.getPubDate().get(Calendar.DAY_OF_MONTH) + "");
-		String message = "Please enter in the correct format: DD-MM-YYYY\nThe book's date has not been updated!";
-		JOptionPane.showMessageDialog(this, message, "Date format error", JOptionPane.ERROR_MESSAGE);
-	}
-	
 	@SuppressWarnings("rawtypes")
 	protected void initDataBindings() {
 		BeanProperty<Library, List<Book>> libraryBeanProperty = BeanProperty.create("items");
-		JListBinding<Book, Library, JList> jListBinding = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty, list);
-		//
+		jListBinding = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty, list);
 		ELProperty<Book, Object> bookEvalutionProperty = ELProperty.create("${title} - ${author}");
 		jListBinding.setDetailBinding(bookEvalutionProperty);
-		//
 		jListBinding.bind();
-		//
+		
 		BeanProperty<JList, String> jListBeanProperty = BeanProperty.create("selectedElement.title");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty = BeanProperty.create("text");
 		AutoBinding<JList, String, JTextField, String> autoBinding = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty, txtTitle, jTextFieldBeanProperty);
 		autoBinding.bind();
-		//
+		
 		BeanProperty<JList, String> jListBeanProperty_1 = BeanProperty.create("selectedElement.author");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_1 = BeanProperty.create("text");
 		AutoBinding<JList, String, JTextField, String> autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_1, txtAuthor, jTextFieldBeanProperty_1);
 		autoBinding_1.bind();
-		//
+		
 		BeanProperty<JList, String> jListBeanProperty_2 = BeanProperty.create("selectedElement.publisher");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_2 = BeanProperty.create("text");
 		AutoBinding<JList, String, JTextField, String> autoBinding_2 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_2, txtPublisher, jTextFieldBeanProperty_2);
 		autoBinding_2.bind();
-		//
+		
 		BeanProperty<JList, String> jListBeanProperty_3 = BeanProperty.create("selectedElement.type");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_3 = BeanProperty.create("text");
 		AutoBinding<JList, String, JTextField, String> autoBinding_3 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_3, txtType, jTextFieldBeanProperty_3);
 		autoBinding_3.bind();
-		//
-		BeanProperty<JList, Double> jListBeanProperty_4 = BeanProperty.create("selectedElement.price");
+		
+		BeanProperty<JList, Integer> jListBeanProperty_4 = BeanProperty.create("selectedElement.priceInPence");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_4 = BeanProperty.create("text");
-		AutoBinding<JList, Double, JTextField, String> autoBinding_4 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_4, txtPrice, jTextFieldBeanProperty_4);
+		AutoBinding<JList, Integer, JTextField, String> autoBinding_4 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_4, txtPrice, jTextFieldBeanProperty_4);
+		autoBinding_4.setConverter(new PriceConverter());
 		autoBinding_4.bind();
-		//
-		BeanProperty<JList, String> jListBeanProperty_8 = BeanProperty.create("selectedElement.infoLabel");
+		
+		BeanProperty<JList, String> jListBeanProperty_5 = BeanProperty.create("selectedElement.infoLabel");
 		BeanProperty<JLabel, String> jLabelBeanProperty = BeanProperty.create("text");
-		AutoBinding<JList, String, JLabel, String> autoBinding_8 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_8, lblInfo, jLabelBeanProperty);
+		AutoBinding<JList, String, JLabel, String> autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_5, lblInfo, jLabelBeanProperty);
+		autoBinding_5.bind();
+		
+		BeanProperty<JList, String> jListBeanProperty_6 = BeanProperty.create("selectedElement.infoValue");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty_5 = BeanProperty.create("text");
+		AutoBinding<JList, String, JTextField, String> autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_6, txtInfo, jTextFieldBeanProperty_5);
+		autoBinding_6.bind();
+		
+		BeanProperty<Library, Integer> libraryBeanProperty_1 = BeanProperty.create("bookCount");
+		AutoBinding<Library, Integer, JLabel, String> autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ, library, libraryBeanProperty_1, valTotalBooks, jLabelBeanProperty);
+		autoBinding_7.bind();
+		
+		BeanProperty<Library, Integer> libraryBeanProperty_2 = BeanProperty.create("totalPrices");
+		AutoBinding<Library, Integer, JLabel, String> autoBinding_8 = Bindings.createAutoBinding(UpdateStrategy.READ, library, libraryBeanProperty_2, valTotalVal, jLabelBeanProperty);
+		autoBinding_8.setConverter(new PriceConverter());
 		autoBinding_8.bind();
-		//
-		BeanProperty<JList, String> jListBeanProperty_9 = BeanProperty.create("selectedElement.infoValue");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty_9 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_9 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_9, txtInfo, jTextFieldBeanProperty_9);
+		
+		BeanProperty<Library, Integer> libraryBeanProperty_3 = BeanProperty.create("fictionalCount");
+		AutoBinding<Library, Integer, JLabel, String> autoBinding_9 = Bindings.createAutoBinding(UpdateStrategy.READ, library, libraryBeanProperty_3, valTotalFict, jLabelBeanProperty);
 		autoBinding_9.bind();
-	}
-	
-	private class MyFocusListener implements FocusListener
-	{
-
-		JTextField txtField;
-		int fieldType;
-		Book book;
 		
-		public MyFocusListener(JTextField txtField, int fieldType, Book book)
-		{
-			this.txtField = txtField;
-			this.fieldType = fieldType;
-			this.book = book;
-		}
+		BeanProperty<Library, Integer> libraryBeanProperty_4 = BeanProperty.create("historyCount");
+		AutoBinding<Library, Integer, JLabel, String> autoBinding_10 = Bindings.createAutoBinding(UpdateStrategy.READ, library, libraryBeanProperty_4, valTotalHist, jLabelBeanProperty);
+		autoBinding_10.bind();
 		
-		@Override
-		public void focusGained(FocusEvent e)
-		{
-			book = library.getBook(list.getSelectedIndex());
-		}
-
-		@Override
-		public void focusLost(FocusEvent e)
-		{
-			setBookDate(txtField, fieldType, book);
-			book = null;
-		}
+		BeanProperty<Library, Integer> libraryBeanProperty_5 = BeanProperty.create("textCount");
+		AutoBinding<Library, Integer, JLabel, String> autoBinding_11 = Bindings.createAutoBinding(UpdateStrategy.READ, library, libraryBeanProperty_5, valTotalText, jLabelBeanProperty);
+		autoBinding_11.bind();
 		
+		BeanProperty<JList, Date> jListBeanProperty_7 = BeanProperty.create("selectedElement.pubDate");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty_6 = BeanProperty.create("text");
+		AutoBinding<JList, Date, JTextField, String> autoBinding_12 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_7, txtPubDate, jTextFieldBeanProperty_6);
+		autoBinding_12.setConverter(new DateConverter(this));
+		autoBinding_12.bind();
+		
+		BeanProperty<Library, List<String>> libraryBeanProperty_6 = BeanProperty.create("authors");
+		JListBinding<String, Library, JList> jListBinding_1 = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty_6, lstAuthors);
+		jListBinding_1.bind();
+		
+		BeanProperty<Library, List<String>> libraryBeanProperty_7 = BeanProperty.create("publishers");
+		JListBinding<String, Library, JList> jListBinding_2 = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty_7, lstPublishers);
+		jListBinding_2.bind();
+		
+		BeanProperty<Library, List<Date>> libraryBeanProperty_8 = BeanProperty.create("dates");
+		JListBinding<Date, Library, JList> jListBinding_3 = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty_8, lstPubDates);
+		jListBinding_3.setConverter(new ListDateConverter());
+		jListBinding_3.bind();
 	}
 }

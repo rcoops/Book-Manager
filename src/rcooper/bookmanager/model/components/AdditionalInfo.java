@@ -1,4 +1,4 @@
-package rcooper.bookmanager.model;
+package rcooper.bookmanager.model.components;
 
 import java.io.Serializable;
 

@@ -22,16 +22,16 @@ public class LibraryReaderWriter
 
 	public LibraryReaderWriter(String fileName)
 	{
-		super();
 		this.fileName = fileName;
 	}
 
-	public void writeObjects(List<Book> library) throws IOException
+	public void writeObjects(List<Book> library) throws IOException 
 	{
 		OutputStream file = null;
 		OutputStream buffer = null;
 		ObjectOutput output = null;
-		try {
+		// Better to catch in library after opening/closing attempted
+		try { 
 			file = new FileOutputStream(fileName);
 			buffer = new BufferedOutputStream(file);
 			output = new ObjectOutputStream(buffer);
@@ -60,7 +60,7 @@ public class LibraryReaderWriter
 			buffer = new BufferedInputStream(file);
 			input = new ObjectInputStream(buffer);
 			return (List<Book>) input.readObject();
-		} catch(IOException | ClassNotFoundException | ClassCastException e) {
+		} catch(ClassNotFoundException | ClassCastException e) {
 			return null; // Handle this in manager
 		} finally {
 			if(input != null) {
