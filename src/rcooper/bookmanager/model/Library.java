@@ -85,17 +85,17 @@ public class Library extends AbstractModelObject implements Serializable
 		return new ArrayList<String>(publishers);
 	}
 	
-//	public List<GregorianCalendar> getDates()
-//	{
-//		List<GregorianCalendar> dates = null;
-//		if(!isEmpty()) {
-//			dates = new ArrayList<GregorianCalendar>();
-//			for(Book book : items) {
-//				dates.add(book.getPubDate());
-//			}
-//		}
-//		return dates;
-//	}
+	public List<GregorianCalendar> getDates()
+	{
+		List<GregorianCalendar> dates = null;
+		if(!isEmpty()) {
+			dates = new ArrayList<GregorianCalendar>();
+			for(Book book : items) {
+				dates.add(book.getPubDate());
+			}
+		}
+		return dates;
+	}
 	
 	public List<Book> getBooksFilteredByDate(GregorianCalendar startDate, GregorianCalendar endDate)
 	{

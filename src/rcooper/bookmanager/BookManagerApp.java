@@ -64,21 +64,18 @@ import rcooper.bookmanager.model.TextBook;
 public class BookManagerApp extends JFrame
 {
 	
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -3904857322897679210L;
 	private final int SAVE_DIALOG = 0, OPEN_DIALOG = 1;
 	private final Object[] BOOK_TYPES = {"Fictional", "History", "Textbook"};
 	private final static String VERSION = "0.7";
-	
+	private JMenuItem mnIApplyFilter, mnIRemoveFilter;
 	private JPanel detailsPanel;
+	private JScrollPane listPane;
 	private JLabel lblInfo, valTotalBooks, valTotalVal, valTotalFict, valTotalHist, valTotalText, lblFilterApplied;
 	private JTextField txtTitle, txtAuthor, txtPublisher, txtPrice, txtInfo, txtType, txtPubDate;
+	private JButton btnAdd, btnEdit, btnRemove;
 	private JList<String> list, lstAuthors, lstPublishers;
 	private JList<Date> lstPubDates;
-	private JButton btnAdd, btnEdit, btnRemove;
-	private JListBinding<Book, Library, JList> jListBinding;
 	private Library library;
 	private List<Book> temp;
 	
@@ -98,6 +95,8 @@ public class BookManagerApp extends JFrame
 		});
 	}
 	
+	/* INITIALISATION */
+	
 	public BookManagerApp()
 	{
 		library = new Library();
@@ -105,14 +104,17 @@ public class BookManagerApp extends JFrame
 		library.addBook(new FictionalBook("Robinson Crusoe", "Daniel Defoe", "W. Taylor", new GregorianCalendar(1719, 4, 25), 599 , "Historical Fiction"));
 		library.addBook(new FictionalBook("The Colour of Magic", "Terry Pratchett", "Corgi", new GregorianCalendar(1984, 1, 18), 550 , "Fantasy/Comedy"));
 		library.addBook(new TextBook("Objects First with Java", "David Barnes & Michael Kolling", "Pearson", new GregorianCalendar(2011, 9, 30), 5999 , "Java Programming"));
+		library.addBook(new TextBook("Levison's Textbook for Dental Nurses", "Carole Hollins", "Wiley-Blackwell", new GregorianCalendar(2013, 7, 5), 2564 , "Dentistry"));
+		library.addBook(new TextBook("Equilibrium Thermodynamics", "Mario J. de Oliveira", "Springer", new GregorianCalendar(2013, 5, 17), 6799, "Physics"));
 		library.addBook(new HistoryBook("SPQR: A history of Ancient Rome", "Professor Mary Beard", "Profile Books", new GregorianCalendar(2015, 10, 20), 1700 , "Ancient History"));
+		library.addBook(new HistoryBook("The Secret War: Spies, Codes and Guerillas 1939-1945", "Max Hastings", "William Collins", new GregorianCalendar(2015, 9, 10), 1199 , "20th Century"));
+		library.addBook(new HistoryBook("The Brother Gardeners: Botany, Empire and the Birth of an Obsession", "Andrea Wulf", "Windmill Books", new GregorianCalendar(2009, 2, 5), 998 , "18th Century"));
+		
 		init(new JTabbedPane(), new JMenuBar()); 
 		
 		pack();
 		initDataBindings();
 	}
-	
-	/* INITIALISATION */
 	
 	private void init(JTabbedPane mainPane, JMenuBar menuBar)
 	{
@@ -140,8 +142,8 @@ public class BookManagerApp extends JFrame
 		JMenuItem mnIClose = new JMenuItem("Close");
 		
 		//// Search menu item ////
-		JMenuItem mnIApplyFilter = new JMenuItem("Apply Filter");
-		JMenuItem mnIRemoveFilter = new JMenuItem("Remove Filter");
+		mnIApplyFilter = new JMenuItem("Apply Filter");
+		mnIRemoveFilter = new JMenuItem("Remove Filter");
 		
 		//// Help menu items ////
 		JMenuItem mnIReadMe = new JMenuItem("View Help");
@@ -165,6 +167,8 @@ public class BookManagerApp extends JFrame
 		//// app.menuBar.help setup ////
 		mnHelp.add(mnIReadMe);
 		mnHelp.add(mnIAbout);
+
+		mnIRemoveFilter.setEnabled(false);
 		
 		initActionListeners(mnIOpen, mnISave, mnIClose, mnIApplyFilter, mnIRemoveFilter, mnIReadMe, mnIAbout);
 	}
@@ -184,7 +188,7 @@ public class BookManagerApp extends JFrame
 	private void initDetailsView(JSplitPane detailsView)
 	{
 		detailsPanel = new JPanel();
-		JScrollPane listPane = new JScrollPane();
+		listPane = new JScrollPane();
 		
 		detailsView.setLeftComponent(listPane);
 		detailsView.setRightComponent(detailsPanel);
@@ -192,8 +196,9 @@ public class BookManagerApp extends JFrame
 		//// app.tabbedPane.detailsView.listPane setup ////
 		initListPane(listPane);
 		
-		lblFilterApplied = new JLabel("Filter Applied:");
-		listPane.setColumnHeaderView(lblFilterApplied);
+		lblFilterApplied = new JLabel();
+		
+		lblFilterApplied.setVisible(false);
 		
 		//// app.tabbedPane.detailsView.detailsPanel setup ////
 		initDetailsPanel();
@@ -538,7 +543,7 @@ public class BookManagerApp extends JFrame
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				showAbout();
+				aboutDialog();
 			}
 		});
 		
@@ -600,6 +605,8 @@ public class BookManagerApp extends JFrame
 		list.setFont(new Font("Arial", Font.PLAIN, 10));
 	}
 	
+	/* ADD/REMOVE BOOK */
+	
 	private Book addBook(int index, Object booktype)
 	{
 		Book book = null;
@@ -634,52 +641,49 @@ public class BookManagerApp extends JFrame
 			list.setSelectedIndex(currentIndex);
 		}
 		if(!library.isEmpty()) {
-			list.setSelectedIndex(currentIndex-1);
+			list.setSelectedIndex(currentIndex - 1);
 		}
 	}
+	
+	/* Filter Functionality */
 	
 	private void applyFilter()
 	{
-		String message = "Please enter a start date and an end date. Leave the end date blank to search to the current day.";
-		JPanel mainPanel = new JPanel(new GridLayout(2,0));
-		JPanel optionPanel = new JPanel(new GridLayout(0,3));
-		JLabel dash = new JLabel("-");
-		dash.setHorizontalAlignment(SwingConstants.CENTER);
 		JTextField txtStartDate = new JTextField();
 		JTextField txtEndDate = new JTextField();
-		optionPanel.add(new JLabel("Start Date (dd/mm/yyyy):"));
-		optionPanel.add(Box.createHorizontalStrut(5));
-		optionPanel.add(new JLabel("End Date (dd/mm/yyyy):"));
-		optionPanel.add(txtStartDate);
-		optionPanel.add(dash);
-		optionPanel.add(txtEndDate);
-		mainPanel.add(new JLabel(message));
-		mainPanel.add(optionPanel);
-		Object[] options = new Object[] {"OK", "Cancel"};
-		int option = JOptionPane.showOptionDialog(this, mainPanel, "Pick Date Range", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
-		if(option == JOptionPane.YES_OPTION) {
-			GregorianCalendar startDate = getDateFromString(txtStartDate.getText(), false);
-			GregorianCalendar endDate = getDateFromString(txtEndDate.getText(), true);
-			GregorianCalendar now = new GregorianCalendar();
-			if(startDate != null) {
-				if(startDate.compareTo(now) < 1) {
-					temp = library.getBooks();
-					library.replaceBooks(library.getBooksFilteredByDate(startDate, endDate)); // TODO make list work
-				} else {
-					dateErrorDialog();
+		
+		if(!library.isEmpty()) {
+			int option = getDateRange(txtStartDate, txtEndDate);
+			if(option == JOptionPane.YES_OPTION) {
+				GregorianCalendar startCal = getDateFromString(txtStartDate.getText(), false);
+				GregorianCalendar endCal = getDateFromString(txtEndDate.getText(), true);
+				GregorianCalendar now = new GregorianCalendar();
+				
+				if(startCal != null) {
+					if(startCal.compareTo(now) < 1) {
+						SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+						String start = formatter.format(startCal.getTime());
+						String end = formatter.format(endCal.getTime());
+						temp = library.getBooks();
+						
+						library.replaceBooks(library.getBooksFilteredByDate(startCal, endCal));
+						lblFilterApplied.setText("Filter applied: " + start + " - " + end);
+						indicateFilter(true);
+					} else {
+						dateErrorDialog();
+					}
 				}
 			}
+		} else {
+			noBooksDialog();
 		}
 	}
 	
-//	private void setListData(List<Book> filteredList)
-//	{
-//		String[] data = new String[filteredList.size()];
-//		for(int i = 0; i < data.length; i++) {
-//			data[i] = filteredList.get(i).getTitle() + " - " + filteredList.get(i).getAuthor(); 
-//		}
-//		list.setListData(data);
-//	}
+	private void removeFilter()
+	{
+			library.replaceBooks(temp);
+			indicateFilter(false);
+	}
 	
 	private GregorianCalendar getDateFromString(String strDate, boolean isEnd)
 	{
@@ -710,66 +714,10 @@ public class BookManagerApp extends JFrame
 		if(date != null) {
 			calendar.setTime(date);
 		}
-//		if(!strDate.isEmpty()) {
-//			String[] strDates = strDate.split("/");
-//			int[] intDates = new int[3];
-//			if(strDates.length == 3) {
-//				try {
-//					for(int i = 0; i < strDates.length; i++) {
-//						intDates[i] = Integer.parseInt(strDates[i]);
-//					}
-//					date = new GregorianCalendar(intDates[2], intDates[1], intDates[0]);
-//				} catch(NumberFormatException e) {
-//					dateErrorDialog();
-//				}
-//			} else {
-//				dateErrorDialog();
-//			}
-//		} else if(isEnd) {
-//			date = new GregorianCalendar();
-//		}
 		return calendar;
 	}
 	
-	private void removeFilter()
-	{
-//		if(temp != null) {
-//			library = new Library(temp);
-//		}
-	}
-	private void dateErrorDialog()
-	{
-		String message = "Dates must be entered in dd/mm/yyyy format.\nPlease try again.";
-		JOptionPane.showMessageDialog(this, message, "Date Error", JOptionPane.ERROR_MESSAGE);
-	}
-	
-	private void selectFile(int dialogChoice)
-	{
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("Book Library File", "blf");
-	    JFileChooser fc = new JFileChooser();
-	    fc.setFileFilter(filter);
-	    fc.setAcceptAllFileFilterUsed(false);
-	    int action = -1; // Non-value
-		if(dialogChoice == SAVE_DIALOG) {
-			action = fc.showSaveDialog(this);
-		} else if(dialogChoice == OPEN_DIALOG) {
-			action = fc.showOpenDialog(this);
-		}
-	    
-	    if(action == JFileChooser.APPROVE_OPTION) {
-	    	File file = fc.getSelectedFile();
-	    	if(!file.getName().endsWith(".blf")) {
-	    		file = new File(file + ".blf");
-	    	}
-	    	String path = file.getAbsolutePath();
-	    	LibraryReaderWriter lrw = new LibraryReaderWriter(path);
-	    	if(dialogChoice == SAVE_DIALOG) {
-	    		saveLibrary(lrw, path, file.getName());
-	    	} else if(dialogChoice == OPEN_DIALOG) {
-	    		openLibrary(lrw, path, file.getName());
-	    	}
-	    }
-	}
+	/* SAVE OPEN CLOSE */
 	
 	private void saveLibrary(LibraryReaderWriter lrw, String path, String fileName)
 	{
@@ -803,7 +751,7 @@ public class BookManagerApp extends JFrame
 	private void closeLibrary()
 	{
 		if(library.isEmpty()) {
-			JOptionPane.showMessageDialog(this, "You have no library open", "Empty library", JOptionPane.INFORMATION_MESSAGE);
+			noBooksDialog();
 		} else {
 			String message = "If you close the library you will lose any "
 					+ "unsaved changes! Do you wish to save?";
@@ -818,6 +766,48 @@ public class BookManagerApp extends JFrame
 				library.replaceBooks(new ArrayList<Book>());
 				break;
 			}
+		}
+	}
+	
+	private void selectFile(int dialogChoice)
+	{
+		FileNameExtensionFilter filter = new FileNameExtensionFilter("Book Library File", "blf");
+	    JFileChooser fc = new JFileChooser();
+	    fc.setFileFilter(filter);
+	    fc.setAcceptAllFileFilterUsed(false);
+	    int action = -1; // Non-value
+		if(dialogChoice == SAVE_DIALOG) {
+			action = fc.showSaveDialog(this);
+		} else if(dialogChoice == OPEN_DIALOG) {
+			action = fc.showOpenDialog(this);
+		}
+	    
+	    if(action == JFileChooser.APPROVE_OPTION) {
+	    	File file = fc.getSelectedFile();
+	    	if(!file.getName().endsWith(".blf")) {
+	    		file = new File(file + ".blf");
+	    	}
+	    	String path = file.getAbsolutePath();
+	    	LibraryReaderWriter lrw = new LibraryReaderWriter(path);
+	    	if(dialogChoice == SAVE_DIALOG) {
+	    		saveLibrary(lrw, path, file.getName());
+	    	} else if(dialogChoice == OPEN_DIALOG) {
+	    		openLibrary(lrw, path, file.getName());
+	    	}
+	    }
+	}
+
+	/* GUI ADJUSTMENTS */
+	
+	private void indicateFilter(boolean filterApplied)
+	{
+		mnIApplyFilter.setEnabled(!filterApplied);
+		lblFilterApplied.setVisible(filterApplied);
+		mnIRemoveFilter.setEnabled(filterApplied);
+		if(filterApplied) {
+			listPane.setColumnHeaderView(lblFilterApplied);
+		} else {
+			listPane.setColumnHeaderView(null);
 		}
 	}
 	
@@ -840,9 +830,32 @@ public class BookManagerApp extends JFrame
 		}	
 	}
 	
-	private void showAbout()
+	/* DIALOGS */
+	
+	private int getDateRange(JTextField txtStartDate, JTextField txtEndDate)
 	{
-		JOptionPane.showMessageDialog(this, "Book Manager App Version 0.7");
+		String message = "Please enter a start date and an end date. Leave the end date blank to search to the current day.";
+		Object[] options = new Object[] {"OK", "Cancel"};
+		JPanel mainPanel = new JPanel(new GridLayout(2,0));
+		JPanel optionPanel = new JPanel(new GridLayout(0,3));
+		JLabel dash = new JLabel("-");
+		
+		dash.setHorizontalAlignment(SwingConstants.CENTER);
+		optionPanel.add(new JLabel("Start Date (dd/mm/yyyy):"));
+		optionPanel.add(Box.createHorizontalStrut(5));
+		optionPanel.add(new JLabel("End Date (dd/mm/yyyy):"));
+		optionPanel.add(txtStartDate);
+		optionPanel.add(dash);
+		optionPanel.add(txtEndDate);
+		mainPanel.add(new JLabel(message));
+		mainPanel.add(optionPanel);
+		
+		return JOptionPane.showOptionDialog(this, mainPanel, "Pick Date Range", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+	}
+	
+	private void aboutDialog()
+	{
+		JOptionPane.showMessageDialog(this, "Book Manager App Version " + VERSION);
 	}
 	
 	// Convert the exception to a stack trace and display in a dialog
@@ -857,10 +870,20 @@ public class BookManagerApp extends JFrame
 		System.exit(1);
 	}
 	
+	private void noBooksDialog()
+	{
+		JOptionPane.showMessageDialog(this, "There are no books in this library.", "Empty library", JOptionPane.INFORMATION_MESSAGE);
+	}
+	
+	private void dateErrorDialog()
+	{
+		String message = "Dates must be entered in dd/mm/yyyy, mm/yyyy or yyyy format.\nPlease try again.";
+		JOptionPane.showMessageDialog(this, message, "Date Error", JOptionPane.ERROR_MESSAGE);
+	}
 	
 	protected void initDataBindings() {
 		BeanProperty<Library, List<Book>> libraryBeanProperty = BeanProperty.create("books");
-		jListBinding = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty, list);
+		JListBinding<Book, Library, JList> jListBinding = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty, list);
 		ELProperty<Book, Object> bookEvalutionProperty = ELProperty.create("${title} - ${author}");
 		jListBinding.setDetailBinding(bookEvalutionProperty);
 		jListBinding.bind();
