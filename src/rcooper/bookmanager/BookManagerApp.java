@@ -73,7 +73,7 @@ public class BookManagerApp extends JFrame
 	private final static String VERSION = "0.7";
 	
 	private JPanel detailsPanel;
-	private JLabel lblInfo, valTotalBooks, valTotalVal, valTotalFict, valTotalHist, valTotalText;
+	private JLabel lblInfo, valTotalBooks, valTotalVal, valTotalFict, valTotalHist, valTotalText, lblFilterApplied;
 	private JTextField txtTitle, txtAuthor, txtPublisher, txtPrice, txtInfo, txtType, txtPubDate;
 	private JList<String> list, lstAuthors, lstPublishers;
 	private JList<Date> lstPubDates;
@@ -101,9 +101,10 @@ public class BookManagerApp extends JFrame
 	public BookManagerApp()
 	{
 		library = new Library();
-		//temp = new ArrayList<Book>();
+		library.addBook(new FictionalBook("Treasure Island", "Robert Louis Stevenson", "Cassel & Co.", new GregorianCalendar(1883, 11, 14), 599 , "Historical Fiction"));
+		library.addBook(new FictionalBook("Robinson Crusoe", "Daniel Defoe", "W. Taylor", new GregorianCalendar(1719, 4, 25), 599 , "Historical Fiction"));
 		library.addBook(new FictionalBook("The Colour of Magic", "Terry Pratchett", "Corgi", new GregorianCalendar(1984, 1, 18), 550 , "Fantasy/Comedy"));
-		library.addBook(new TextBook("Objects First with Java", "David Barnes & Michael Kölling", "Pearson", new GregorianCalendar(2011, 9, 30), 5999 , "Java Programming"));
+		library.addBook(new TextBook("Objects First with Java", "David Barnes & Michael Kolling", "Pearson", new GregorianCalendar(2011, 9, 30), 5999 , "Java Programming"));
 		library.addBook(new HistoryBook("SPQR: A history of Ancient Rome", "Professor Mary Beard", "Profile Books", new GregorianCalendar(2015, 10, 20), 1700 , "Ancient History"));
 		init(new JTabbedPane(), new JMenuBar()); 
 		
@@ -190,6 +191,9 @@ public class BookManagerApp extends JFrame
 		
 		//// app.tabbedPane.detailsView.listPane setup ////
 		initListPane(listPane);
+		
+		lblFilterApplied = new JLabel("Filter Applied:");
+		listPane.setColumnHeaderView(lblFilterApplied);
 		
 		//// app.tabbedPane.detailsView.detailsPanel setup ////
 		initDetailsPanel();
@@ -636,37 +640,36 @@ public class BookManagerApp extends JFrame
 	
 	private void applyFilter()
 	{
-//		String message = "Please enter a start date and an end date. Leave the end date blank to search to the current day.";
-//		JPanel mainPanel = new JPanel(new GridLayout(2,0));
-//		JPanel optionPanel = new JPanel(new GridLayout(0,3));
-//		JLabel dash = new JLabel("-");
-//		dash.setHorizontalAlignment(SwingConstants.CENTER);
-//		JTextField txtStartDate = new JTextField();
-//		JTextField txtEndDate = new JTextField();
-//		optionPanel.add(new JLabel("Start Date (dd/mm/yyyy):"));
-//		optionPanel.add(Box.createHorizontalStrut(5));
-//		optionPanel.add(new JLabel("End Date (dd/mm/yyyy):"));
-//		optionPanel.add(txtStartDate);
-//		optionPanel.add(dash);
-//		optionPanel.add(txtEndDate);
-//		mainPanel.add(new JLabel(message));
-//		mainPanel.add(optionPanel);
-//		Object[] options = new Object[] {"OK", "Cancel"};
-//		int option = JOptionPane.showOptionDialog(this, mainPanel, "Pick Date Range", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
-//		if(option == JOptionPane.YES_OPTION) {
-//			GregorianCalendar startDate = getDateFromString(txtStartDate.getText(), false);
-//			GregorianCalendar endDate = getDateFromString(txtEndDate.getText(), true);
-//			GregorianCalendar now = new GregorianCalendar();
-//			if(startDate != null) {
-//				System.out.println(startDate.compareTo(now));
-//				if(startDate.compareTo(now) < 1) {
-//					temp = library.getBooks();
-//					library.replaceBooks(library.getBooksFilteredByDate(startDate, endDate)); // TODO make list work
-//				} else {
-//					dateErrorDialog();
-//				}
-//			}
-//		}
+		String message = "Please enter a start date and an end date. Leave the end date blank to search to the current day.";
+		JPanel mainPanel = new JPanel(new GridLayout(2,0));
+		JPanel optionPanel = new JPanel(new GridLayout(0,3));
+		JLabel dash = new JLabel("-");
+		dash.setHorizontalAlignment(SwingConstants.CENTER);
+		JTextField txtStartDate = new JTextField();
+		JTextField txtEndDate = new JTextField();
+		optionPanel.add(new JLabel("Start Date (dd/mm/yyyy):"));
+		optionPanel.add(Box.createHorizontalStrut(5));
+		optionPanel.add(new JLabel("End Date (dd/mm/yyyy):"));
+		optionPanel.add(txtStartDate);
+		optionPanel.add(dash);
+		optionPanel.add(txtEndDate);
+		mainPanel.add(new JLabel(message));
+		mainPanel.add(optionPanel);
+		Object[] options = new Object[] {"OK", "Cancel"};
+		int option = JOptionPane.showOptionDialog(this, mainPanel, "Pick Date Range", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+		if(option == JOptionPane.YES_OPTION) {
+			GregorianCalendar startDate = getDateFromString(txtStartDate.getText(), false);
+			GregorianCalendar endDate = getDateFromString(txtEndDate.getText(), true);
+			GregorianCalendar now = new GregorianCalendar();
+			if(startDate != null) {
+				if(startDate.compareTo(now) < 1) {
+					temp = library.getBooks();
+					library.replaceBooks(library.getBooksFilteredByDate(startDate, endDate)); // TODO make list work
+				} else {
+					dateErrorDialog();
+				}
+			}
+		}
 	}
 	
 //	private void setListData(List<Book> filteredList)
@@ -678,56 +681,55 @@ public class BookManagerApp extends JFrame
 //		list.setListData(data);
 //	}
 	
-//	private GregorianCalendar getDateFromString(String strDate, boolean isEnd)
-//	{
-//		SimpleDateFormat all = new SimpleDateFormat("dd/MM/yyyy");
-//		SimpleDateFormat monthYear = new SimpleDateFormat("MM/yyyy");
-//		SimpleDateFormat year = new SimpleDateFormat("yyyy");
-//		GregorianCalendar calendar = null;
-//		Date date = null;
-//		//TODO check if endDate is empty
-//		try {
-//			date = all.parse(strDate);
-//		} catch (ParseException e) {
-//			try {
-//				date = monthYear.parse(strDate);
-//			} catch (ParseException f) {
+	private GregorianCalendar getDateFromString(String strDate, boolean isEnd)
+	{
+		SimpleDateFormat all = new SimpleDateFormat("dd/MM/yyyy");
+		SimpleDateFormat monthYear = new SimpleDateFormat("MM/yyyy");
+		SimpleDateFormat year = new SimpleDateFormat("yyyy");
+		GregorianCalendar calendar = null;
+		Date date = null;
+		//TODO check if endDate is empty
+		try {
+			date = all.parse(strDate);
+		} catch (ParseException e) {
+			try {
+				date = monthYear.parse(strDate);
+			} catch (ParseException f) {
+				try {
+					date = year.parse(strDate);
+				} catch (ParseException g) {
+					if(!isEnd) {
+						dateErrorDialog();
+					}
+				}
+			} 
+		}
+		if(date != null || isEnd) {
+			calendar = new GregorianCalendar();
+		}
+		if(date != null) {
+			calendar.setTime(date);
+		}
+//		if(!strDate.isEmpty()) {
+//			String[] strDates = strDate.split("/");
+//			int[] intDates = new int[3];
+//			if(strDates.length == 3) {
 //				try {
-//					System.out.println(year.parse(strDate));
-//					date = year.parse(strDate);
-//				} catch (ParseException g) {
-//					if(!isEnd) {
-//						dateErrorDialog();
+//					for(int i = 0; i < strDates.length; i++) {
+//						intDates[i] = Integer.parseInt(strDates[i]);
 //					}
+//					date = new GregorianCalendar(intDates[2], intDates[1], intDates[0]);
+//				} catch(NumberFormatException e) {
+//					dateErrorDialog();
 //				}
-//			} 
+//			} else {
+//				dateErrorDialog();
+//			}
+//		} else if(isEnd) {
+//			date = new GregorianCalendar();
 //		}
-//		if(date != null || isEnd) {
-//			calendar = new GregorianCalendar();
-//		}
-//		if(date != null) {
-//			calendar.setTime(date);
-//		}
-////		if(!strDate.isEmpty()) {
-////			String[] strDates = strDate.split("/");
-////			int[] intDates = new int[3];
-////			if(strDates.length == 3) {
-////				try {
-////					for(int i = 0; i < strDates.length; i++) {
-////						intDates[i] = Integer.parseInt(strDates[i]);
-////					}
-////					date = new GregorianCalendar(intDates[2], intDates[1], intDates[0]);
-////				} catch(NumberFormatException e) {
-////					dateErrorDialog();
-////				}
-////			} else {
-////				dateErrorDialog();
-////			}
-////		} else if(isEnd) {
-////			date = new GregorianCalendar();
-////		}
-//		return calendar;
-//	}
+		return calendar;
+	}
 	
 	private void removeFilter()
 	{
@@ -855,9 +857,9 @@ public class BookManagerApp extends JFrame
 		System.exit(1);
 	}
 	
-	@SuppressWarnings("rawtypes")
+	
 	protected void initDataBindings() {
-		BeanProperty<Library, List<Book>> libraryBeanProperty = BeanProperty.create("items");
+		BeanProperty<Library, List<Book>> libraryBeanProperty = BeanProperty.create("books");
 		jListBinding = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty, list);
 		ELProperty<Book, Object> bookEvalutionProperty = ELProperty.create("${title} - ${author}");
 		jListBinding.setDetailBinding(bookEvalutionProperty);
@@ -899,6 +901,12 @@ public class BookManagerApp extends JFrame
 		AutoBinding<JList, String, JTextField, String> autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_6, txtInfo, jTextFieldBeanProperty_5);
 		autoBinding_6.bind();
 		
+		BeanProperty<JList, GregorianCalendar> jListBeanProperty_7 = BeanProperty.create("selectedElement.pubDate");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty_6 = BeanProperty.create("text");
+		AutoBinding<JList, GregorianCalendar, JTextField, String> autoBinding_12 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_7, txtPubDate, jTextFieldBeanProperty_6);
+		autoBinding_12.setConverter(new DateConverter(this));
+		autoBinding_12.bind();
+		
 		BeanProperty<Library, Integer> libraryBeanProperty_1 = BeanProperty.create("bookCount");
 		AutoBinding<Library, Integer, JLabel, String> autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ, library, libraryBeanProperty_1, valTotalBooks, jLabelBeanProperty);
 		autoBinding_7.bind();
@@ -919,12 +927,6 @@ public class BookManagerApp extends JFrame
 		BeanProperty<Library, Integer> libraryBeanProperty_5 = BeanProperty.create("textCount");
 		AutoBinding<Library, Integer, JLabel, String> autoBinding_11 = Bindings.createAutoBinding(UpdateStrategy.READ, library, libraryBeanProperty_5, valTotalText, jLabelBeanProperty);
 		autoBinding_11.bind();
-		
-		BeanProperty<JList, GregorianCalendar> jListBeanProperty_7 = BeanProperty.create("selectedElement.pubDate");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty_6 = BeanProperty.create("text");
-		AutoBinding<JList, GregorianCalendar, JTextField, String> autoBinding_12 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_7, txtPubDate, jTextFieldBeanProperty_6);
-		autoBinding_12.setConverter(new DateConverter(this));
-		autoBinding_12.bind();
 		
 		BeanProperty<Library, List<String>> libraryBeanProperty_6 = BeanProperty.create("authors");
 		JListBinding<String, Library, JList> jListBinding_1 = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty_6, lstAuthors);

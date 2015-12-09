@@ -156,7 +156,7 @@ public class Library extends AbstractModelObject implements Serializable
 		List<Book> oldValue = items;
 		items = new ArrayList<Book>(items);
 		items.add(book);
-		firePropertyChange("items", oldValue, items);
+		firePropertyChange("books", oldValue, items);
 		firePropertyChange("itemsCount", oldValue.size(), items.size());
 	}
 	
@@ -168,7 +168,7 @@ public class Library extends AbstractModelObject implements Serializable
 		List<Book> oldValue = items;
 		items = new ArrayList<Book>(items);
 		items.add(index, book);
-		firePropertyChange("items", oldValue, items);
+		firePropertyChange("books", oldValue, items);
 		firePropertyChange("itemsCount", oldValue.size(), items.size());
 	}
 	
@@ -177,14 +177,14 @@ public class Library extends AbstractModelObject implements Serializable
 		List<Book> oldValue = items;
 		items = new ArrayList<Book>(items);
 		items.remove(book);
-		firePropertyChange("items", oldValue, items);
+		firePropertyChange("books", oldValue, items);
 		firePropertyChange("itemsCount", oldValue.size(), items.size());
 	}
 
 	public void replaceBooks(List<Book> newItems) {
 		List<Book> oldValue = items;
 		items = newItems;
-		firePropertyChange("items", oldValue, items);
+		firePropertyChange("books", oldValue, items);
 		try {
 			firePropertyChange("itemsCount", oldValue.size(), items.size());
 		} catch( NullPointerException npe) {
@@ -197,7 +197,7 @@ public class Library extends AbstractModelObject implements Serializable
 		List<Book> oldItems = items;
 		items = new ArrayList<Book>( items );
 		Collections.sort( items );
-		firePropertyChange( "items", oldItems, items );
+		firePropertyChange( "books", oldItems, items );
 	}
 	
 	public void sortDescending()
@@ -205,7 +205,7 @@ public class Library extends AbstractModelObject implements Serializable
 		List<Book> oldItems = items;
 		items = new ArrayList<Book>( items );
 		Collections.sort( items, Collections.reverseOrder() );
-		firePropertyChange( "items", oldItems, items );
+		firePropertyChange( "books", oldItems, items );
 	}
 
 }
