@@ -1,7 +1,7 @@
 package rcooper.bookmanager.model;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.util.GregorianCalendar;
 
 import rcooper.bookmanager.model.components.AdditionalInfo;
 
@@ -13,16 +13,16 @@ public abstract class Book extends AbstractModelObject implements Comparable<Boo
 	 */
 	private static final long serialVersionUID = 1L;
 	protected String type, title, author, publisher;
-	protected Date pubDate;
+	protected GregorianCalendar pubDate;
 	protected int priceInPence;
 	protected AdditionalInfo info;
 
 	public Book()
 	{
-		this("", "", "", new Date(), 0);
+		this("", "", "", new GregorianCalendar(), 0);
 	}
 	
-	public Book(String title, String author, String publisher, Date pubDate, int priceInPence)
+	public Book(String title, String author, String publisher, GregorianCalendar pubDate, int priceInPence)
 	{
 		this.title = title;
 		this.author = author;
@@ -71,7 +71,7 @@ public abstract class Book extends AbstractModelObject implements Comparable<Boo
 		return publisher;
 	}
 
-	public Date getPubDate()
+	public GregorianCalendar getPubDate()
 	{
 		return pubDate;
 	}
@@ -129,9 +129,9 @@ public abstract class Book extends AbstractModelObject implements Comparable<Boo
 		firePropertyChange("publisher", old, this.publisher);
 	}
 	
-	public void setPubDate(Date pubDate)
+	public void setPubDate(GregorianCalendar pubDate)
 	{
-		Date old = this.pubDate;
+		GregorianCalendar old = this.pubDate;
 		this.pubDate = pubDate;
 		firePropertyChange("pubDate", old, this.pubDate);
 	}

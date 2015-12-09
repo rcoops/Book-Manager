@@ -3,7 +3,7 @@ package rcooper.bookmanager.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,7 +57,7 @@ public class Library extends AbstractModelObject implements Serializable
 		return count;
 	}
 
-	public List<Book> getItems() {
+	public List<Book> getBooks() {
 		return items;
 	}
 	
@@ -85,24 +85,27 @@ public class Library extends AbstractModelObject implements Serializable
 		return new ArrayList<String>(publishers);
 	}
 	
-	public List<Date> getDates()
-	{
-		List<Date> dates = null;
-		if(!isEmpty()) {
-			dates = new ArrayList<Date>();
-			for(Book book : items) {
-				dates.add(book.getPubDate());
-			}
-		}
-		return dates;
-	}
+//	public List<GregorianCalendar> getDates()
+//	{
+//		List<GregorianCalendar> dates = null;
+//		if(!isEmpty()) {
+//			dates = new ArrayList<GregorianCalendar>();
+//			for(Book book : items) {
+//				dates.add(book.getPubDate());
+//			}
+//		}
+//		return dates;
+//	}
 	
-	public List<Book> getFilteredDates(Date startDate, Date endDate)
+	public List<Book> getBooksFilteredByDate(GregorianCalendar startDate, GregorianCalendar endDate)
 	{
 		List<Book> books = new ArrayList<Book>();
 		for(Book book : items) {
-			Date date = book.getPubDate();
-			boolean beforeEnd = date.compareTo(endDate) == -1;
+			GregorianCalendar date = book.getPubDate();
+			boolean beforeEnd = true;
+			if(endDate != null) {
+				beforeEnd = date.compareTo(endDate) == -1;
+			}
 			boolean afterStart = date.compareTo(startDate) > -1;
 			if( beforeEnd && afterStart ) {
 				books.add(book);
@@ -142,7 +145,7 @@ public class Library extends AbstractModelObject implements Serializable
 		StringBuilder sb = new StringBuilder();
 		
 		for(Book item : items) {
-			sb.append( item.toString() + " ");
+			sb.append( item.toString() + "\n");
 		}
 		
 		return sb.toString();

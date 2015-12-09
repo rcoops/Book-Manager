@@ -12,10 +12,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -79,7 +80,7 @@ public class BookManagerApp extends JFrame
 	private JButton btnAdd, btnEdit, btnRemove;
 	private JListBinding<Book, Library, JList> jListBinding;
 	private Library library;
-	
+	private List<Book> temp;
 	
 	public static void main(String[] args)
 	{
@@ -97,13 +98,13 @@ public class BookManagerApp extends JFrame
 		});
 	}
 	
-	@SuppressWarnings("deprecation")
 	public BookManagerApp()
 	{
 		library = new Library();
-		library.addBook(new FictionalBook("The Colour of Magic", "Terry Pratchett", "Corgi", new Date(84, 1, 18), 550 , "Fantasy/Comedy"));
-		library.addBook(new TextBook("Objects First with Java", "David Barnes & Michael Kölling", "Pearson", new Date(111, 9, 30), 5999 , "Java Programming"));
-		library.addBook(new HistoryBook("SPQR: A history of Ancient Rome", "Professor Mary Beard", "Profile Books", new Date(115, 10, 20), 1700 , "Ancient History"));
+		//temp = new ArrayList<Book>();
+		library.addBook(new FictionalBook("The Colour of Magic", "Terry Pratchett", "Corgi", new GregorianCalendar(1984, 1, 18), 550 , "Fantasy/Comedy"));
+		library.addBook(new TextBook("Objects First with Java", "David Barnes & Michael Kölling", "Pearson", new GregorianCalendar(2011, 9, 30), 5999 , "Java Programming"));
+		library.addBook(new HistoryBook("SPQR: A history of Ancient Rome", "Professor Mary Beard", "Profile Books", new GregorianCalendar(2015, 10, 20), 1700 , "Ancient History"));
 		init(new JTabbedPane(), new JMenuBar()); 
 		
 		pack();
@@ -163,8 +164,6 @@ public class BookManagerApp extends JFrame
 		//// app.menuBar.help setup ////
 		mnHelp.add(mnIReadMe);
 		mnHelp.add(mnIAbout);
-		
-		
 		
 		initActionListeners(mnIOpen, mnISave, mnIClose, mnIApplyFilter, mnIRemoveFilter, mnIReadMe, mnIAbout);
 	}
@@ -637,78 +636,104 @@ public class BookManagerApp extends JFrame
 	
 	private void applyFilter()
 	{
-		String message = "Please enter a start date and an end date. Leave the end date blank to search to the current day.";
-		JPanel mainPanel = new JPanel(new GridLayout(2,0));
-		JPanel optionPanel = new JPanel(new GridLayout(0,3));
-		JLabel dash = new JLabel("-");
-		dash.setHorizontalAlignment(SwingConstants.CENTER);
-		JTextField txtStartDate = new JTextField();
-		JTextField txtEndDate = new JTextField();
-		optionPanel.add(new JLabel("Start Date (dd/mm/yyyy):"));
-		optionPanel.add(Box.createHorizontalStrut(5));
-		optionPanel.add(new JLabel("End Date (dd/mm/yyyy):"));
-		optionPanel.add(txtStartDate);
-		optionPanel.add(dash);
-		optionPanel.add(txtEndDate);
-		mainPanel.add(new JLabel(message));
-		mainPanel.add(optionPanel);
-		Object[] options = new Object[] {"OK", "Cancel"};
-		int option = JOptionPane.showOptionDialog(this, mainPanel, "Pick Date Range", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
-		if(option == JOptionPane.YES_OPTION) {
-			Date startDate = getDateFromString(txtStartDate.getText(), false);
-			Date endDate = getDateFromString(txtEndDate.getText(), true);
-			Date now = new Date();
-			if(startDate != null) {
-				if(startDate.compareTo(now) < 1) {
-					if(jListBinding.isBound()) {
-						jListBinding.unbind();
-					}
-					setListData(library.getFilteredDates(startDate, endDate));
-				} else {
-					dateErrorDialog();
-				}
-			}
-		}
+//		String message = "Please enter a start date and an end date. Leave the end date blank to search to the current day.";
+//		JPanel mainPanel = new JPanel(new GridLayout(2,0));
+//		JPanel optionPanel = new JPanel(new GridLayout(0,3));
+//		JLabel dash = new JLabel("-");
+//		dash.setHorizontalAlignment(SwingConstants.CENTER);
+//		JTextField txtStartDate = new JTextField();
+//		JTextField txtEndDate = new JTextField();
+//		optionPanel.add(new JLabel("Start Date (dd/mm/yyyy):"));
+//		optionPanel.add(Box.createHorizontalStrut(5));
+//		optionPanel.add(new JLabel("End Date (dd/mm/yyyy):"));
+//		optionPanel.add(txtStartDate);
+//		optionPanel.add(dash);
+//		optionPanel.add(txtEndDate);
+//		mainPanel.add(new JLabel(message));
+//		mainPanel.add(optionPanel);
+//		Object[] options = new Object[] {"OK", "Cancel"};
+//		int option = JOptionPane.showOptionDialog(this, mainPanel, "Pick Date Range", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+//		if(option == JOptionPane.YES_OPTION) {
+//			GregorianCalendar startDate = getDateFromString(txtStartDate.getText(), false);
+//			GregorianCalendar endDate = getDateFromString(txtEndDate.getText(), true);
+//			GregorianCalendar now = new GregorianCalendar();
+//			if(startDate != null) {
+//				System.out.println(startDate.compareTo(now));
+//				if(startDate.compareTo(now) < 1) {
+//					temp = library.getBooks();
+//					library.replaceBooks(library.getBooksFilteredByDate(startDate, endDate)); // TODO make list work
+//				} else {
+//					dateErrorDialog();
+//				}
+//			}
+//		}
 	}
 	
-	private void setListData(List<Book> filteredList)
-	{
-		String[] data = new String[filteredList.size()];
-		for(int i = 0; i < data.length; i++) {
-			data[i] = filteredList.get(i).getTitle() + " - " + filteredList.get(i).getAuthor(); 
-		}
-		list.setListData(data);
-	}
+//	private void setListData(List<Book> filteredList)
+//	{
+//		String[] data = new String[filteredList.size()];
+//		for(int i = 0; i < data.length; i++) {
+//			data[i] = filteredList.get(i).getTitle() + " - " + filteredList.get(i).getAuthor(); 
+//		}
+//		list.setListData(data);
+//	}
 	
-	private Date getDateFromString(String strDate, boolean isEnd)
-	{
-		Date date = null;
-		if(!strDate.isEmpty()) {
-			String[] strDates = strDate.split("/");
-			int[] intDates = new int[3];
-			if(strDates.length == 3) {
-				try {
-					for(int i = 0; i < strDates.length; i++) {
-						intDates[i] = Integer.parseInt(strDates[i]);
-					}
-					date = new Date((intDates[2] - 1900), (intDates[1] - 1), intDates[0]);
-				} catch(NumberFormatException e) {
-					dateErrorDialog();
-				}
-			} else {
-				dateErrorDialog();
-			}
-		} else if(isEnd) {
-			date = new Date();
-		}
-		return date;
-	}
+//	private GregorianCalendar getDateFromString(String strDate, boolean isEnd)
+//	{
+//		SimpleDateFormat all = new SimpleDateFormat("dd/MM/yyyy");
+//		SimpleDateFormat monthYear = new SimpleDateFormat("MM/yyyy");
+//		SimpleDateFormat year = new SimpleDateFormat("yyyy");
+//		GregorianCalendar calendar = null;
+//		Date date = null;
+//		//TODO check if endDate is empty
+//		try {
+//			date = all.parse(strDate);
+//		} catch (ParseException e) {
+//			try {
+//				date = monthYear.parse(strDate);
+//			} catch (ParseException f) {
+//				try {
+//					System.out.println(year.parse(strDate));
+//					date = year.parse(strDate);
+//				} catch (ParseException g) {
+//					if(!isEnd) {
+//						dateErrorDialog();
+//					}
+//				}
+//			} 
+//		}
+//		if(date != null || isEnd) {
+//			calendar = new GregorianCalendar();
+//		}
+//		if(date != null) {
+//			calendar.setTime(date);
+//		}
+////		if(!strDate.isEmpty()) {
+////			String[] strDates = strDate.split("/");
+////			int[] intDates = new int[3];
+////			if(strDates.length == 3) {
+////				try {
+////					for(int i = 0; i < strDates.length; i++) {
+////						intDates[i] = Integer.parseInt(strDates[i]);
+////					}
+////					date = new GregorianCalendar(intDates[2], intDates[1], intDates[0]);
+////				} catch(NumberFormatException e) {
+////					dateErrorDialog();
+////				}
+////			} else {
+////				dateErrorDialog();
+////			}
+////		} else if(isEnd) {
+////			date = new GregorianCalendar();
+////		}
+//		return calendar;
+//	}
 	
 	private void removeFilter()
 	{
-		if(!jListBinding.isBound()) {
-			jListBinding.bind();
-		}
+//		if(temp != null) {
+//			library = new Library(temp);
+//		}
 	}
 	private void dateErrorDialog()
 	{
@@ -747,7 +772,7 @@ public class BookManagerApp extends JFrame
 	private void saveLibrary(LibraryReaderWriter lrw, String path, String fileName)
 	{
     	try {
-    		lrw.writeObjects(library.getItems());
+    		lrw.writeObjects(library.getBooks());
     	} catch(IOException ioe) {
     		fatalException(ioe);
     	}
@@ -755,7 +780,7 @@ public class BookManagerApp extends JFrame
 	
 	private void openLibrary(LibraryReaderWriter lrw, String path, String fileName)
 	{
-		List<Book> books = library.getItems();
+		List<Book> books = library.getBooks();
     	try {
     		library.replaceBooks(lrw.readObjects());
     	} catch(IOException ioe) { // Closing stream fail
@@ -895,9 +920,9 @@ public class BookManagerApp extends JFrame
 		AutoBinding<Library, Integer, JLabel, String> autoBinding_11 = Bindings.createAutoBinding(UpdateStrategy.READ, library, libraryBeanProperty_5, valTotalText, jLabelBeanProperty);
 		autoBinding_11.bind();
 		
-		BeanProperty<JList, Date> jListBeanProperty_7 = BeanProperty.create("selectedElement.pubDate");
+		BeanProperty<JList, GregorianCalendar> jListBeanProperty_7 = BeanProperty.create("selectedElement.pubDate");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_6 = BeanProperty.create("text");
-		AutoBinding<JList, Date, JTextField, String> autoBinding_12 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_7, txtPubDate, jTextFieldBeanProperty_6);
+		AutoBinding<JList, GregorianCalendar, JTextField, String> autoBinding_12 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_7, txtPubDate, jTextFieldBeanProperty_6);
 		autoBinding_12.setConverter(new DateConverter(this));
 		autoBinding_12.bind();
 		
@@ -909,8 +934,8 @@ public class BookManagerApp extends JFrame
 		JListBinding<String, Library, JList> jListBinding_2 = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty_7, lstPublishers);
 		jListBinding_2.bind();
 		
-		BeanProperty<Library, List<Date>> libraryBeanProperty_8 = BeanProperty.create("dates");
-		JListBinding<Date, Library, JList> jListBinding_3 = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty_8, lstPubDates);
+		BeanProperty<Library, List<GregorianCalendar>> libraryBeanProperty_8 = BeanProperty.create("dates");
+		JListBinding<GregorianCalendar, Library, JList> jListBinding_3 = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty_8, lstPubDates);
 		jListBinding_3.setConverter(new ListDateConverter());
 		jListBinding_3.bind();
 	}
