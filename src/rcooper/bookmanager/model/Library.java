@@ -4,13 +4,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.GregorianCalendar;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class Library extends AbstractModelObject implements Serializable
 {
 	
+	private static final long serialVersionUID = 1L;
 	private List<Book> items;
 	
 	public Library()
@@ -59,42 +58,6 @@ public class Library extends AbstractModelObject implements Serializable
 	public List<Book> getBooks() {
 		return items;
 	}
-	
-//	public List<String> getAuthors()
-//	{
-//		Set<String> authors = null;
-//		if(!isEmpty()) {
-//			authors = new HashSet<String>();
-//			for(Book book : items) {
-//				authors.add(book.getAuthor());
-//			}
-//		}
-//		return new ArrayList<String>(authors);
-//	}
-//	
-//	public List<String> getPublishers()
-//	{
-//		Set<String> publishers = null;
-//		if(!isEmpty()) {
-//			publishers = new HashSet<String>();
-//			for(Book book : items) {
-//				publishers.add(book.getPublisher());
-//			}
-//		}
-//		return new ArrayList<String>(publishers);
-//	}
-//	
-//	public List<GregorianCalendar> getDates()
-//	{
-//		List<GregorianCalendar> dates = null;
-//		if(!isEmpty()) {
-//			dates = new ArrayList<GregorianCalendar>();
-//			for(Book book : items) {
-//				dates.add(book.getPubDate());
-//			}
-//		}
-//		return dates;
-//	}
 	
 	public List<Book> getBooksFilteredByDate(GregorianCalendar startDate, GregorianCalendar endDate)
 	{

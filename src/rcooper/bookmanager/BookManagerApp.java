@@ -53,7 +53,6 @@ import org.jdesktop.swingbinding.JListBinding;
 import org.jdesktop.swingbinding.SwingBindings;
 
 import rcooper.bookmanager.converters.DateConverter;
-import rcooper.bookmanager.converters.ListDateConverter;
 import rcooper.bookmanager.converters.PriceConverter;
 import rcooper.bookmanager.model.Book;
 import rcooper.bookmanager.model.FictionalBook;
@@ -65,7 +64,7 @@ import rcooper.bookmanager.model.TextBook;
  * Creates a Book Manager Application able to record, store and display details
  * of a <code>Library</code> model.
  * 
- * @version 1.2
+ * @version 1.4
  * @author Rick Cooper r.p.cooper1@edu.salford.ac.uk
  */
 public class BookManagerApp extends JFrame
@@ -73,17 +72,17 @@ public class BookManagerApp extends JFrame
 
 	private final int SAVE_DIALOG = 0, OPEN_DIALOG = 1;
 	private final Object[] BOOK_TYPES = { "Fictional", "History", "Textbook" };
-	private final static String VERSION = "0.7";
+	private final static String VERSION = "1.4";
 	private JMenuItem mnIApplyFilter, mnIRemoveFilter;
 	private JPanel detailsPanel;
 	private JScrollPane listPane;
 	private JLabel lblInfo, valTotalBooks, valTotalVal, valTotalFict, valTotalHist, valTotalText, lblFilterApplied;
 	private JTextField txtTitle, txtAuthor, txtPublisher, txtPrice, txtInfo, txtType, txtPubDate;
 	private JButton btnAdd, btnEdit, btnRemove;
-	private JList<String> list, lstAuthors, lstPublishers;
-	private JList<Date> lstPubDates;
+	private JList<String> list, lstAuthors, lstPublishers, lstPubDates;
 	private Library library;
 	private List<Book> temp;
+	private JLabel lblTotalBooks;
 
 	public static void main(String[] args)
 	{
@@ -203,7 +202,7 @@ public class BookManagerApp extends JFrame
 	{
 		lstAuthors = new JList<String>();
 		lstPublishers = new JList<String>();
-		lstPubDates = new JList<Date>();
+		lstPubDates = new JList<String>();
 		valTotalBooks = new JLabel("totalBooks");
 		valTotalFict = new JLabel("totalFict");
 		valTotalHist = new JLabel("totalHist");
@@ -219,7 +218,7 @@ public class BookManagerApp extends JFrame
 		JLabel lblAuthors = new JLabel("Authors");
 		JLabel lblPublishers = new JLabel("Publishers");
 		JLabel lblDates = new JLabel("Dates");
-		JLabel lblTotalBooks = new JLabel("Total No. of Books:");
+		lblTotalBooks = new JLabel("Total No. of Books:");
 		JLabel lblTotalFict = new JLabel("Total No. of Fictional Books:");
 		JLabel lblTotalHistory = new JLabel("Total No. of History Books:");
 		JLabel lblTotalText = new JLabel("Total No. of Text Books:");
@@ -635,7 +634,7 @@ public class BookManagerApp extends JFrame
 		}
 	}
 
-	/* Filter Functionality */
+	/* FILTER */
 
 	private void applyFilter()
 	{
@@ -682,7 +681,6 @@ public class BookManagerApp extends JFrame
 		SimpleDateFormat year = new SimpleDateFormat("yyyy");
 		GregorianCalendar calendar = null;
 		Date date = null;
-		// TODO check if endDate is empty
 		try {
 			date = all.parse(strDate);
 		} catch(ParseException e) {
@@ -761,7 +759,8 @@ public class BookManagerApp extends JFrame
 	private void selectFile(int dialogChoice)
 	{
 		FileNameExtensionFilter filter = new FileNameExtensionFilter("Book Library File", "blf");
-		JFileChooser fc = new JFileChooser(new File(".")); // Set dir to same as jar
+		JFileChooser fc = new JFileChooser(new File(".")); // Set dir to same as
+															// jar
 		fc.setFileFilter(filter);
 		fc.setAcceptAllFileFilterUsed(false);
 		int action = -1; // Non-value
@@ -871,106 +870,77 @@ public class BookManagerApp extends JFrame
 		String message = "Dates must be entered in dd/mm/yyyy, mm/yyyy or yyyy format.\nPlease try again.";
 		JOptionPane.showMessageDialog(this, message, "Date Error", JOptionPane.ERROR_MESSAGE);
 	}
-
-	protected void initDataBindings()
-	{
+	
+	protected void initDataBindings() {
 		BeanProperty<Library, List<Book>> libraryBeanProperty = BeanProperty.create("books");
-		JListBinding<Book, Library, JList> jListBinding = SwingBindings.createJListBinding(UpdateStrategy.READ, library,
-				libraryBeanProperty, list);
+		JListBinding<Book, Library, JList> jListBinding = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty, list);
+		//
 		ELProperty<Book, Object> bookEvalutionProperty = ELProperty.create("${title} - ${author}");
 		jListBinding.setDetailBinding(bookEvalutionProperty);
+		//
 		jListBinding.bind();
-
+		//
+		JListBinding<Book, Library, JList> jListBinding_1 = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty, lstAuthors);
+		//
+		ELProperty<Book, Object> bookEvalutionProperty_1 = ELProperty.create("${author}");
+		jListBinding_1.setDetailBinding(bookEvalutionProperty_1);
+		//
+		jListBinding_1.bind();
+		//
+		JListBinding<Book, Library, JList> jListBinding_2 = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty, lstPublishers);
+		//
+		ELProperty<Book, Object> bookEvalutionProperty_2 = ELProperty.create("${publisher}");
+		jListBinding_2.setDetailBinding(bookEvalutionProperty_2);
+		//
+		jListBinding_2.bind();
+		//
+		JListBinding<Book, Library, JList> jListBinding_3 = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty, lstPubDates);
+		//
+		ELProperty<Book, Object> bookEvalutionProperty_3 = ELProperty.create("${dateString}");
+		jListBinding_3.setDetailBinding(bookEvalutionProperty_3);
+		//
+		jListBinding_3.bind();
+		//
 		BeanProperty<JList, String> jListBeanProperty = BeanProperty.create("selectedElement.title");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, list, jListBeanProperty, txtTitle, jTextFieldBeanProperty);
+		AutoBinding<JList, String, JTextField, String> autoBinding = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty, txtTitle, jTextFieldBeanProperty);
 		autoBinding.bind();
-
+		//
 		BeanProperty<JList, String> jListBeanProperty_1 = BeanProperty.create("selectedElement.author");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_1 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_1 = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, list, jListBeanProperty_1, txtAuthor, jTextFieldBeanProperty_1);
+		AutoBinding<JList, String, JTextField, String> autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_1, txtAuthor, jTextFieldBeanProperty_1);
 		autoBinding_1.bind();
-
+		//
 		BeanProperty<JList, String> jListBeanProperty_2 = BeanProperty.create("selectedElement.publisher");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_2 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_2 = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, list, jListBeanProperty_2, txtPublisher, jTextFieldBeanProperty_2);
+		AutoBinding<JList, String, JTextField, String> autoBinding_2 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_2, txtPublisher, jTextFieldBeanProperty_2);
 		autoBinding_2.bind();
-
+		//
 		BeanProperty<JList, String> jListBeanProperty_3 = BeanProperty.create("selectedElement.type");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_3 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_3 = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, list, jListBeanProperty_3, txtType, jTextFieldBeanProperty_3);
+		AutoBinding<JList, String, JTextField, String> autoBinding_3 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_3, txtType, jTextFieldBeanProperty_3);
 		autoBinding_3.bind();
-
+		//
 		BeanProperty<JList, Integer> jListBeanProperty_4 = BeanProperty.create("selectedElement.priceInPence");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_4 = BeanProperty.create("text");
-		AutoBinding<JList, Integer, JTextField, String> autoBinding_4 = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, list, jListBeanProperty_4, txtPrice, jTextFieldBeanProperty_4);
+		AutoBinding<JList, Integer, JTextField, String> autoBinding_4 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_4, txtPrice, jTextFieldBeanProperty_4);
 		autoBinding_4.setConverter(new PriceConverter());
 		autoBinding_4.bind();
-
+		//
 		BeanProperty<JList, String> jListBeanProperty_5 = BeanProperty.create("selectedElement.infoLabel");
 		BeanProperty<JLabel, String> jLabelBeanProperty = BeanProperty.create("text");
-		AutoBinding<JList, String, JLabel, String> autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
-				list, jListBeanProperty_5, lblInfo, jLabelBeanProperty);
+		AutoBinding<JList, String, JLabel, String> autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_5, lblInfo, jLabelBeanProperty);
 		autoBinding_5.bind();
-
+		//
 		BeanProperty<JList, String> jListBeanProperty_6 = BeanProperty.create("selectedElement.infoValue");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_5 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_6 = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, list, jListBeanProperty_6, txtInfo, jTextFieldBeanProperty_5);
+		AutoBinding<JList, String, JTextField, String> autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_6, txtInfo, jTextFieldBeanProperty_5);
 		autoBinding_6.bind();
-
+		//
 		BeanProperty<JList, GregorianCalendar> jListBeanProperty_7 = BeanProperty.create("selectedElement.pubDate");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_6 = BeanProperty.create("text");
-		AutoBinding<JList, GregorianCalendar, JTextField, String> autoBinding_12 = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, list, jListBeanProperty_7, txtPubDate, jTextFieldBeanProperty_6);
+		AutoBinding<JList, GregorianCalendar, JTextField, String> autoBinding_12 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_7, txtPubDate, jTextFieldBeanProperty_6);
 		autoBinding_12.setConverter(new DateConverter(this));
 		autoBinding_12.bind();
-
-		BeanProperty<Library, Integer> libraryBeanProperty_1 = BeanProperty.create("bookCount");
-		AutoBinding<Library, Integer, JLabel, String> autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ,
-				library, libraryBeanProperty_1, valTotalBooks, jLabelBeanProperty);
-		autoBinding_7.bind();
-
-		BeanProperty<Library, Integer> libraryBeanProperty_2 = BeanProperty.create("totalPrices");
-		AutoBinding<Library, Integer, JLabel, String> autoBinding_8 = Bindings.createAutoBinding(UpdateStrategy.READ,
-				library, libraryBeanProperty_2, valTotalVal, jLabelBeanProperty);
-		autoBinding_8.setConverter(new PriceConverter());
-		autoBinding_8.bind();
-
-		BeanProperty<Library, Integer> libraryBeanProperty_3 = BeanProperty.create("fictionalCount");
-		AutoBinding<Library, Integer, JLabel, String> autoBinding_9 = Bindings.createAutoBinding(UpdateStrategy.READ,
-				library, libraryBeanProperty_3, valTotalFict, jLabelBeanProperty);
-		autoBinding_9.bind();
-
-		BeanProperty<Library, Integer> libraryBeanProperty_4 = BeanProperty.create("historyCount");
-		AutoBinding<Library, Integer, JLabel, String> autoBinding_10 = Bindings.createAutoBinding(UpdateStrategy.READ,
-				library, libraryBeanProperty_4, valTotalHist, jLabelBeanProperty);
-		autoBinding_10.bind();
-
-		BeanProperty<Library, Integer> libraryBeanProperty_5 = BeanProperty.create("textCount");
-		AutoBinding<Library, Integer, JLabel, String> autoBinding_11 = Bindings.createAutoBinding(UpdateStrategy.READ,
-				library, libraryBeanProperty_5, valTotalText, jLabelBeanProperty);
-		autoBinding_11.bind();
-
-//		BeanProperty<Library, List<String>> libraryBeanProperty_6 = BeanProperty.create("authors");
-//		JListBinding<String, Library, JList> jListBinding_1 = SwingBindings.createJListBinding(UpdateStrategy.READ,
-//				library, libraryBeanProperty_6, lstAuthors);
-//		jListBinding_1.bind();
-//
-//		BeanProperty<Library, List<String>> libraryBeanProperty_7 = BeanProperty.create("publishers");
-//		JListBinding<String, Library, JList> jListBinding_2 = SwingBindings.createJListBinding(UpdateStrategy.READ,
-//				library, libraryBeanProperty_7, lstPublishers);
-//		jListBinding_2.bind();
-//
-//		BeanProperty<Library, List<GregorianCalendar>> libraryBeanProperty_8 = BeanProperty.create("dates");
-//		JListBinding<GregorianCalendar, Library, JList> jListBinding_3 = SwingBindings
-//				.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty_8, lstPubDates);
-//		jListBinding_3.setConverter(new ListDateConverter());
-//		jListBinding_3.bind();
 	}
 }

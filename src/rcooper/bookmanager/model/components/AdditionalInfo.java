@@ -26,12 +26,6 @@ public class AdditionalInfo implements Serializable
 	{
 		return value;
 	}
-	
-	@Override
-	public String toString()
-	{
-		return label + " " + value;
-	}
 
 	public void setLabel(String label)
 	{
