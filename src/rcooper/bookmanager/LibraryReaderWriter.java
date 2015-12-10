@@ -1,6 +1,7 @@
 package rcooper.bookmanager;
 
 import java.io.BufferedInputStream;
+
 import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -15,27 +16,50 @@ import java.util.List;
 
 import rcooper.bookmanager.model.Book;
 
+/**
+ * Permanently stores and retrieves the Books held within a <code>List</code> as
+ * a file.
+ * 
+ * @version 0.2
+ * @author Rick Cooper r.p.cooper1@edu.salford.ac.uk
+ */
 public class LibraryReaderWriter
 {
 
-	private String fileName;
+	private String fileName; // File name to read to and write from
 
+	/**
+	 * Creates a <code>LibraryReaderWriter</code> object able to permanently
+	 * store and retrieve <code>Book</code> data held within a
+	 * <code>Library</code>.
+	 * 
+	 * @param fileName
+	 *            The file name that the data can be stored and retrieved from.
+	 */
 	public LibraryReaderWriter(String fileName)
 	{
 		this.fileName = fileName;
 	}
 
-	public void writeObjects(List<Book> library) throws IOException 
+	/**
+	 * Writes all <code>Book</code> data held within a <code>List</code>.
+	 * 
+	 * @param books
+	 *            The list of <code>Book</code>s to be written.
+	 * @throws IOException
+	 *             If an I/O error occurs.
+	 */
+	public void writeObjects(List<Book> books) throws IOException
 	{
 		OutputStream file = null;
 		OutputStream buffer = null;
 		ObjectOutput output = null;
 		// Better to catch in library after opening/closing attempted
-		try { 
+		try {
 			file = new FileOutputStream(fileName);
 			buffer = new BufferedOutputStream(file);
 			output = new ObjectOutputStream(buffer);
-			output.writeObject(library);
+			output.writeObject(books);
 		} finally {
 			if(output != null) {
 				output.close();
@@ -49,7 +73,14 @@ public class LibraryReaderWriter
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	/**
+	 * Reads all <code>Book</code> data held within a <code>List</code> of
+	 * <code>Book</code> objects.
+	 * 
+	 * @return A list containing <code>Book</code> objects.
+	 * @throws IOException
+	 *             If an I/O error occurs.
+	 */
 	public List<Book> readObjects() throws IOException
 	{
 		InputStream file = null;

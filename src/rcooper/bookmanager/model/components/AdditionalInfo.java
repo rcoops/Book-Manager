@@ -13,13 +13,8 @@ public class AdditionalInfo implements Serializable
 	
 	public AdditionalInfo()
 	{
-		this("","");
-	}
-	
-	public AdditionalInfo(String label, String value)
-	{
-		this.label = label;
-		this.value = value;
+		label = "";
+		value = "";
 	}
 
 	public String getLabel()

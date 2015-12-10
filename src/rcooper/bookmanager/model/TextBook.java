@@ -19,13 +19,4 @@ public class TextBook extends Book
 		setInfoLabel(INFO_LABEL);
 	}
 	
-	public TextBook(String title, String author, String publisher,
-			GregorianCalendar pubDate, int price, String subject)
-	{
-		super(title, author, publisher, pubDate, price);
-		setType(TYPE);
-		setInfoLabel(INFO_LABEL);
-		setInfoValue(subject);
-	}
-	
 }

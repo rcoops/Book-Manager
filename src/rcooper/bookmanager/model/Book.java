@@ -5,32 +5,32 @@ import java.util.GregorianCalendar;
 
 import rcooper.bookmanager.model.components.AdditionalInfo;
 
+/**
+ * Models a book with various properties that all varieties of book shar.
+ * 
+ * @version 1.2
+ * @author Rick Cooper r.p.cooper1@edu.salford.ac.uk
+ */
 public abstract class Book extends AbstractModelObject implements Comparable<Book>, Serializable
 {
 	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
 	protected String type, title, author, publisher;
 	protected GregorianCalendar pubDate;
 	protected int priceInPence;
 	protected AdditionalInfo info;
 
+	/**
+	 * 
+	 */
 	public Book()
 	{
-		this("", "", "", new GregorianCalendar(), 0);
-	}
-	
-	public Book(String title, String author, String publisher, GregorianCalendar pubDate, int priceInPence)
-	{
-		this.title = title;
-		this.author = author;
-		this.publisher = publisher;
-		this.pubDate = pubDate;
-		this.priceInPence = priceInPence;
-		this.type = "";
-		this.info = new AdditionalInfo("", "");
+		type = "";
+		title = "";
+		author = "";
+		publisher = "";
+		pubDate = new GregorianCalendar();
+		priceInPence = 0;
+		info = new AdditionalInfo();
 	}
 
 	/* ACCESSORS */

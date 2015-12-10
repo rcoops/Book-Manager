@@ -5,7 +5,7 @@ import java.beans.PropertyChangeSupport;
 
 /**
  * @author lobas_av
- * see https://developers.google.com/java-dev-tools/wbpro/features/swing/data_binding/example
+ * @see https://developers.google.com/java-dev-tools/wbpro/features/swing/data_binding/example
  * 
  */
 public abstract class AbstractModelObject {

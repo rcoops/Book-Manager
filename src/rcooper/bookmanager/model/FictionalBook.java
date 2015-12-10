@@ -18,14 +18,5 @@ public class FictionalBook extends Book
 		setType(TYPE);
 		setInfoLabel(INFO_LABEL);
 	}
-	
-	public FictionalBook(String title, String author, String publisher,
-			GregorianCalendar pubDate, int price, String genre)
-	{
-		super(title, author, publisher, pubDate, price);
-		setType(TYPE);
-		setInfoLabel(INFO_LABEL);
-		setInfoValue(genre);
-	}
 
 }

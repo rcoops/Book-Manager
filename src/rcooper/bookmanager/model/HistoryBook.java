@@ -18,14 +18,5 @@ public class HistoryBook extends Book
 		setType(TYPE);
 		setInfoLabel(INFO_LABEL);
 	}
-	
-	public HistoryBook(String title, String author, String publisher,
-			GregorianCalendar pubDate, int price, String period)
-	{
-		super(title, author, publisher, pubDate, price);
-		setType(TYPE);
-		setInfoLabel(INFO_LABEL);
-		setInfoValue(period);
-	}
 
 }
