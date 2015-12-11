@@ -1,7 +1,10 @@
-package rcooper.bookmanager.converters;
+package rcooper.bookmanager.util;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 
 import org.jdesktop.beansbinding.Converter;
 
@@ -26,7 +29,7 @@ public class PriceConverter extends Converter<Integer, java.lang.String>
 	@Override
 	public String convertForward(Integer priceInPence)
 	{
-		double priceInPounds = ((int) priceInPence) / 100d;
+		double priceInPounds = priceInPence / 100d;
 		DecimalFormat dF = new DecimalFormat("########0.00");
 		return "£" + dF.format(priceInPounds);
 	}
@@ -45,8 +48,14 @@ public class PriceConverter extends Converter<Integer, java.lang.String>
 		if(strPrice.contains("£")) {
 			strPrice = strPrice.replace("£", "");
 		}
-		BigDecimal bd = new BigDecimal(strPrice);
-		bd = bd.multiply(new BigDecimal(100));
+		try {
+			Integer.parseInt(strPrice.replace(".", ""));
+		} catch(NumberFormatException e) {
+			String message = "This box only accepts numbers, decimal points and £ characters.\nIf you leave this page before correcting, your price will be reset to £0.00";
+			JOptionPane.showMessageDialog(null, message, "Incorrect Price Format", JOptionPane.ERROR_MESSAGE);
+		}
+		// Use BigDecimal to ensure accuracy, * 100 to get pence value
+		BigDecimal bd = new BigDecimal(strPrice).multiply(new BigDecimal(100));
 		return bd.intValue();
 	}
 }

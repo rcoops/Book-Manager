@@ -1,28 +1,42 @@
 package rcooper.bookmanager.model;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.GregorianCalendar;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-public class Library extends AbstractModelObject implements Serializable
+/**
+ * Models a library able to hold a list of three types of book (fictional,
+ * history and textbook) and peform various statistical operations on the
+ * collection.
+ * 
+ * @version 1.4
+ * @author Rick Cooper r.p.cooper1@edu.salford.ac.uk
+ */
+public class Library extends AbstractModelObject
 {
-	
+
 	private List<Book> items;
-	
+
+	/**
+	 * Creates a new <code>Library</code> object.
+	 */
 	public Library()
 	{
 		items = new ArrayList<Book>();
 	}
-	
+
+	/**
+	 * @return The number of <code>Book</code>s held in the <code>Library</code>.
+	 */
 	public int getBookCount()
 	{
 		return items.size();
 	}
-	
+
+	/**
+	 * @return The total number of <code>FictionalBook</code>s held in the <code>Library</code>.
+	 */
 	public int getFictionalCount()
 	{
 		int count = 0;
@@ -33,7 +47,10 @@ public class Library extends AbstractModelObject implements Serializable
 		}
 		return count;
 	}
-	
+
+	/**
+	 * @return The total number of <code>HistoryBook</code>s held in the <code>Library</code>.
+	 */
 	public int getHistoryCount()
 	{
 		int count = 0;
@@ -44,7 +61,10 @@ public class Library extends AbstractModelObject implements Serializable
 		}
 		return count;
 	}
-	
+
+	/**
+	 * @return The total number of <code>TextBook</code>s held in the <code>Library</code>.
+	 */
 	public int getTextCount()
 	{
 		int count = 0;
@@ -56,49 +76,27 @@ public class Library extends AbstractModelObject implements Serializable
 		return count;
 	}
 
-	public List<Book> getBooks() {
+	/**
+	 * @return All the <code>Book</code>s held in the <code>Library</code>.
+	 */
+	public List<Book> getBooks()
+	{
 		return items;
 	}
-	
-//	public List<String> getAuthors()
-//	{
-//		Set<String> authors = null;
-//		if(!isEmpty()) {
-//			authors = new HashSet<String>();
-//			for(Book book : items) {
-//				authors.add(book.getAuthor());
-//			}
-//		}
-//		return new ArrayList<String>(authors);
-//	}
-//	
-//	public List<String> getPublishers()
-//	{
-//		Set<String> publishers = null;
-//		if(!isEmpty()) {
-//			publishers = new HashSet<String>();
-//			for(Book book : items) {
-//				publishers.add(book.getPublisher());
-//			}
-//		}
-//		return new ArrayList<String>(publishers);
-//	}
-//	
-//	public List<GregorianCalendar> getDates()
-//	{
-//		List<GregorianCalendar> dates = null;
-//		if(!isEmpty()) {
-//			dates = new ArrayList<GregorianCalendar>();
-//			for(Book book : items) {
-//				dates.add(book.getPubDate());
-//			}
-//		}
-//		return dates;
-//	}
-	
+
+	/**
+	 * Returns a list of <code>Book</code>s held in the library that were published between the two dates provided.
+	 * 
+	 * @param startDate The lower bound of the filter
+	 * @param endDate The upper bound of the filter
+	 * @return A list of the <code>Book</code>s held in the <code>Library</code> filtered by date published.
+	 */
 	public List<Book> getBooksFilteredByDate(GregorianCalendar startDate, GregorianCalendar endDate)
 	{
 		List<Book> books = new ArrayList<Book>();
+		if(startDate.compareTo(endDate) != -1) {
+			books = null;
+		}
 		for(Book book : items) {
 			GregorianCalendar date = book.getPubDate();
 			boolean beforeEnd = true;
@@ -106,13 +104,16 @@ public class Library extends AbstractModelObject implements Serializable
 				beforeEnd = date.compareTo(endDate) == -1;
 			}
 			boolean afterStart = date.compareTo(startDate) > -1;
-			if( beforeEnd && afterStart ) {
+			if(beforeEnd && afterStart) {
 				books.add(book);
 			}
 		}
 		return books;
 	}
-	
+
+	/**
+	 * @return The total retail price of all <code>Book</code>s held in the <code>Library</code>.
+	 */
 	public int getTotalPrices()
 	{
 		int total = 0;
@@ -123,33 +124,36 @@ public class Library extends AbstractModelObject implements Serializable
 		}
 		return total;
 	}
-	
+
+	/**
+	 * Returns the <code>Book</code> held at the specified index.
+	 * 
+	 * @param index The list position of the required <code>Book</code>.
+	 * @return The <code>Book</code> held at the specified index.
+	 */
 	public Book getBook(int index)
 	{
 		Book book = null;
 		try {
-			book = items.get(index); 
-		} catch(IndexOutOfBoundsException e) {}
+			book = items.get(index);
+		} catch(IndexOutOfBoundsException e) {
+		}
 		return book;
 	}
-	
+
+	/**
+	 * @return true if the <code>Library</code> is not holding any books.
+	 */
 	public boolean isEmpty()
 	{
 		return items.isEmpty();
 	}
-	
-	@Override
-	public String toString()
-	{
-		StringBuilder sb = new StringBuilder();
-		
-		for(Book item : items) {
-			sb.append( item.toString() + "\n");
-		}
-		
-		return sb.toString();
-	}
-	
+
+	/**
+	 * Adds a <code>Book</code> to the <code>Library</code> at the end of the list.
+	 * 
+	 * @param book The <code>Book</code> to be added.
+	 */
 	public void addBook(Book book)
 	{
 		List<Book> oldValue = items;
@@ -158,7 +162,13 @@ public class Library extends AbstractModelObject implements Serializable
 		firePropertyChange("books", oldValue, items);
 		firePropertyChange("itemsCount", oldValue.size(), items.size());
 	}
-	
+
+	/**
+	 * Adds a <code>Book</code> to the <code>Library</code> at the specified index.
+	 * 
+	 * @param index The list position to add the <code>Book</code> to.
+	 * @param book The <code>Book</code> to be added.
+	 */
 	public void addBook(int index, Book book)
 	{
 		if(index == -1) {
@@ -170,7 +180,12 @@ public class Library extends AbstractModelObject implements Serializable
 		firePropertyChange("books", oldValue, items);
 		firePropertyChange("itemsCount", oldValue.size(), items.size());
 	}
-	
+
+	/**
+	 * Removes a <code>Book</code> from the <code>Library</code>.
+	 * 
+	 * @param book The <code>Book</code> to be removed.
+	 */
 	public void removeBook(Book book)
 	{
 		List<Book> oldValue = items;
@@ -180,31 +195,44 @@ public class Library extends AbstractModelObject implements Serializable
 		firePropertyChange("itemsCount", oldValue.size(), items.size());
 	}
 
-	public void replaceBooks(List<Book> newItems) {
+
+	/**
+	 * Replaces all <code>Library</code> contents with another list of <code>Book</code>s.
+	 * 
+	 * @param newItems The replacement list of <code>Book</code>s.
+	 */
+	public void replaceBooks(List<Book> newItems)
+	{
 		List<Book> oldValue = items;
 		items = newItems;
 		firePropertyChange("books", oldValue, items);
 		try {
 			firePropertyChange("itemsCount", oldValue.size(), items.size());
-		} catch( NullPointerException npe) {
+		} catch(NullPointerException npe) {
 			firePropertyChange("itemsCount", 0, items.size());
 		}
 	}
-	
+
+	/**
+	 * Sorts the list of books by title in ascdending alphabetical order.
+	 */
 	public void sortAscending()
-	{	
+	{
 		List<Book> oldItems = items;
-		items = new ArrayList<Book>( items );
-		Collections.sort( items );
-		firePropertyChange( "books", oldItems, items );
+		items = new ArrayList<Book>(items);
+		Collections.sort(items);
+		firePropertyChange("books", oldItems, items);
 	}
-	
+
+	/**
+	 * Sorts the list of books by title in descdending alphabetical order.
+	 */
 	public void sortDescending()
 	{
 		List<Book> oldItems = items;
-		items = new ArrayList<Book>( items );
-		Collections.sort( items, Collections.reverseOrder() );
-		firePropertyChange( "books", oldItems, items );
+		items = new ArrayList<Book>(items);
+		Collections.sort(items, Collections.reverseOrder());
+		firePropertyChange("books", oldItems, items);
 	}
 
 }

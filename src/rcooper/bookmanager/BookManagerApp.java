@@ -21,6 +21,7 @@ import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -33,7 +34,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
@@ -52,14 +52,15 @@ import org.jdesktop.beansbinding.ELProperty;
 import org.jdesktop.swingbinding.JListBinding;
 import org.jdesktop.swingbinding.SwingBindings;
 
-import rcooper.bookmanager.converters.DateConverter;
-import rcooper.bookmanager.converters.ListDateConverter;
-import rcooper.bookmanager.converters.PriceConverter;
+import jdk.nashorn.internal.scripts.JO;
 import rcooper.bookmanager.model.Book;
 import rcooper.bookmanager.model.FictionalBook;
 import rcooper.bookmanager.model.HistoryBook;
 import rcooper.bookmanager.model.Library;
 import rcooper.bookmanager.model.TextBook;
+import rcooper.bookmanager.util.DateConverter;
+import rcooper.bookmanager.util.LibraryReaderWriter;
+import rcooper.bookmanager.util.PriceConverter;
 
 /**
  * Creates a Book Manager Application able to record, store and display details
@@ -71,19 +72,22 @@ import rcooper.bookmanager.model.TextBook;
 public class BookManagerApp extends JFrame
 {
 
+	private static final String VERSION = "0.7";
+
 	private final int SAVE_DIALOG = 0, OPEN_DIALOG = 1;
 	private final Object[] BOOK_TYPES = { "Fictional", "History", "Textbook" };
-	private final static String VERSION = "0.7";
-	private JMenuItem mnIApplyFilter, mnIRemoveFilter;
-	private JPanel detailsPanel;
+
+	private JMenuItem mnIApplyFilter, mnIRemoveFilter, mnISortAsc, mnISortDesc, mnIUnSort;
+	private JPanel reportView, detailsPanel;
+	private JSplitPane detailsView;
 	private JScrollPane listPane;
 	private JLabel lblInfo, valTotalBooks, valTotalVal, valTotalFict, valTotalHist, valTotalText, lblFilterApplied;
-	private JTextField txtTitle, txtAuthor, txtPublisher, txtPrice, txtInfo, txtType, txtPubDate;
-	private JButton btnAdd, btnEdit, btnRemove;
-	private JList<String> list, lstAuthors, lstPublishers;
-	private JList<Date> lstPubDates;
+	private JTextField txtTitle, txtIsbn, txtAuthor, txtPublisher, txtPrice, txtInfo, txtType, txtPubDate;
+	private JButton btnAdd, btnEdit, btnRemove, btnToggle;
+	private JList<String> list, lstAuthors, lstPublishers, lstPubDates;
 	private Library library;
-	private List<Book> temp;
+	private List<Book> tempFilter, tempSort;
+	private boolean listSorted;
 
 	public static void main(String[] args)
 	{
@@ -106,14 +110,33 @@ public class BookManagerApp extends JFrame
 	public BookManagerApp()
 	{
 		library = new Library();
-
-		init(new JTabbedPane(), new JMenuBar());
+		listSorted = false;
+		
+		library.addBook(new FictionalBook("978-1505297409", "Treasure Island", "Robert Louis Stevenson", "Cassel & Co.",
+				new GregorianCalendar(1883, 11, 14), 599, "Historical Fiction"));
+		library.addBook(new FictionalBook("978-1503292383", "Robinson Crusoe", "Daniel Defoe", "W. Taylor",
+				new GregorianCalendar(1719, 4, 25), 599, "Historical Fiction"));
+		library.addBook(new FictionalBook("978-0552124751", "The Colour of Magic", "Terry Pratchett", "Corgi",
+				new GregorianCalendar(1984, 1, 18), 550, "Fantasy/Comedy"));
+		library.addBook(new TextBook("978-0132492660", "Objects First with Java", "David Barnes & Michael Kolling", "Pearson",
+				new GregorianCalendar(2011, 9, 30), 5999, "Java Programming"));
+		library.addBook(new TextBook("978-1118500446", "Levison's Textbook for Dental Nurses", "Carole Hollins", "Wiley-Blackwell",
+				new GregorianCalendar(2013, 7, 5), 2564, "Dentistry"));
+		library.addBook(new TextBook("978-3642365485", "Equilibrium Thermodynamics", "Mario J. de Oliveira", "Springer",
+				new GregorianCalendar(2013, 5, 17), 6799, "Physics"));
+		library.addBook(new HistoryBook("978-1846683800", "SPQR: A history of Ancient Rome", "Professor Mary Beard", "Profile Books",
+				new GregorianCalendar(2015, 10, 20), 1700, "Ancient History"));
+		library.addBook(new HistoryBook("978-0007503742", "The Secret War: Spies, Codes and Guerillas 1939-1945", "Max Hastings",
+				"William Collins", new GregorianCalendar(2015, 9, 10), 1199, "20th Century"));
+		library.addBook(new HistoryBook("978-0099502371", "The Brother Gardeners: Botany, Empire and the Birth of an Obsession",
+				"Andrea Wulf", "Windmill Books", new GregorianCalendar(2009, 2, 5), 998, "18th Century"));
+		init(new JPanel(), new JMenuBar());
 
 		initDataBindings();
 		pack();
 	}
 
-	private void init(JTabbedPane mainPane, JMenuBar menuBar)
+	private void init(JPanel mainPanel, JMenuBar menuBar)
 	{
 		setTitle("Book Manager");
 		setSize(800, 600);
@@ -121,60 +144,80 @@ public class BookManagerApp extends JFrame
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setJMenuBar(menuBar);
-		setContentPane(mainPane);
-		initTabs(mainPane); // app.tabbedPane setup
+		setContentPane(mainPanel);
+		initTabs(mainPanel); // app.tabbedPane setup
 		initMenu(menuBar); // app.menuBar setup
 	}
 
 	private void initMenu(JMenuBar menuBar)
 	{
-		//// Menu bar menus ////
+		// // Menu bar menus ////
 		JMenu mnFile = new JMenu("File");
-		JMenu mnSearch = new JMenu("Search");
+		JMenu mnData = new JMenu("Data");
 		JMenu mnHelp = new JMenu("Help");
 
-		//// File menu items ////
+		// // File menu items ////
 		JMenuItem mnIOpen = new JMenuItem("Open...");
 		JMenuItem mnISave = new JMenuItem("Save");
 		JMenuItem mnIClose = new JMenuItem("Close");
 
-		//// Search menu item ////
+		// // Data menu items ////
 		mnIApplyFilter = new JMenuItem("Apply Filter");
 		mnIRemoveFilter = new JMenuItem("Remove Filter");
+		JMenu mnSort = new JMenu("Sort");
 
-		//// Help menu items ////
+		// // Data menu Sort sub-items ////
+		mnISortAsc = new JMenuItem("Ascending");
+		mnISortDesc = new JMenuItem("Descending");
+		mnIUnSort = new JMenuItem("Remove Sorting");
+
+		// // Help menu items ////
 		JMenuItem mnIAbout = new JMenuItem("About Book Manager");
 
-		//// app.menuBar setup ////
+		// // app.menuBar setup ////
 		menuBar.add(mnFile);
-		menuBar.add(mnSearch);
+		menuBar.add(mnData);
 		menuBar.add(Box.createHorizontalGlue());
 		menuBar.add(mnHelp);
 
-		//// app.menuBar.file setup ////
+		// // app.menuBar.file setup ////
 		mnFile.add(mnIOpen);
 		mnFile.add(mnISave);
 		mnFile.add(mnIClose);
 
-		//// app.menuBar.file setup ////
-		mnSearch.add(mnIApplyFilter);
-		mnSearch.add(mnIRemoveFilter);
+		// // app.menuBar.data setup ////
+		mnData.add(mnIApplyFilter);
+		mnData.add(mnIRemoveFilter);
+		mnData.add(mnSort);
 
-		//// app.menuBar.help setup ////
+		// // app.menuBar.data.sort setup ////
+		mnSort.add(mnISortAsc);
+		mnSort.add(mnISortDesc);
+		mnSort.add(mnIUnSort);
+
+		// // app.menuBar.help setup ////
 		mnHelp.add(mnIAbout);
 
 		mnIRemoveFilter.setEnabled(false);
+		mnIUnSort.setEnabled(false);
 
 		initActionListeners(mnIOpen, mnISave, mnIClose, mnIApplyFilter, mnIRemoveFilter, mnIAbout);
 	}
 
-	private void initTabs(JTabbedPane mainPane)
+	private void initTabs(JPanel mainPanel)
 	{
-		JSplitPane detailsView = new JSplitPane();
-		JPanel reportView = new JPanel();
+		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+		detailsView = new JSplitPane();
+		reportView = new JPanel();
+		btnToggle = new JButton("Report View");
+		mainPanel.add(btnToggle);
+		mainPanel.add(detailsView);
+		mainPanel.add(reportView);
 
-		mainPane.addTab("Details View", detailsView);
-		mainPane.addTab("Report View", reportView);
+		btnToggle.setAlignmentX(SwingConstants.RIGHT);
+		detailsView.setAlignmentX(SwingConstants.LEFT);
+		reportView.setAlignmentX(SwingConstants.LEFT);
+		reportView.setVisible(false);
 
 		initDetailsView(detailsView);
 		initReportView(reportView);
@@ -184,18 +227,17 @@ public class BookManagerApp extends JFrame
 	{
 		detailsPanel = new JPanel();
 		listPane = new JScrollPane();
-
 		detailsView.setLeftComponent(listPane);
 		detailsView.setRightComponent(detailsPanel);
 
-		//// app.tabbedPane.detailsView.listPane setup ////
+		// // app.tabbedPane.detailsView.listPane setup ////
 		initListPane(listPane);
 
 		lblFilterApplied = new JLabel();
 
 		lblFilterApplied.setVisible(false);
 
-		//// app.tabbedPane.detailsView.detailsPanel setup ////
+		// // app.tabbedPane.detailsView.detailsPanel setup ////
 		initDetailsPanel();
 	}
 
@@ -203,7 +245,7 @@ public class BookManagerApp extends JFrame
 	{
 		lstAuthors = new JList<String>();
 		lstPublishers = new JList<String>();
-		lstPubDates = new JList<Date>();
+		lstPubDates = new JList<String>();
 		valTotalBooks = new JLabel("totalBooks");
 		valTotalFict = new JLabel("totalFict");
 		valTotalHist = new JLabel("totalHist");
@@ -218,7 +260,7 @@ public class BookManagerApp extends JFrame
 		JScrollPane scrDates = new JScrollPane();
 		JLabel lblAuthors = new JLabel("Authors");
 		JLabel lblPublishers = new JLabel("Publishers");
-		JLabel lblDates = new JLabel("Dates");
+		JLabel lblDates = new JLabel("Publish Dates");
 		JLabel lblTotalBooks = new JLabel("Total No. of Books:");
 		JLabel lblTotalFict = new JLabel("Total No. of Fictional Books:");
 		JLabel lblTotalHistory = new JLabel("Total No. of History Books:");
@@ -390,6 +432,7 @@ public class BookManagerApp extends JFrame
 	private void initDetailsPanel()
 	{
 		JLabel lblType = new JLabel("Type:");
+		JLabel lblIsbn = new JLabel("ISBN:");
 		JLabel lblTitle = new JLabel("Title:");
 		JLabel lblAuthor = new JLabel("Author:");
 		JLabel lblPublisher = new JLabel("Publisher:");
@@ -400,6 +443,7 @@ public class BookManagerApp extends JFrame
 		GridBagConstraints gbc = new GridBagConstraints();
 		lblInfo = new JLabel();
 		txtType = new JTextField();
+		txtIsbn = new JTextField();
 		txtTitle = new JTextField();
 		txtAuthor = new JTextField();
 		txtPublisher = new JTextField();
@@ -426,6 +470,8 @@ public class BookManagerApp extends JFrame
 		detailsPanel.add(lblPrice, gbc);
 		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(lblPublisher, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
+		detailsPanel.add(lblIsbn, gbc);
 
 		gbc = (GridBagConstraints) gbc.clone();
 		gbc.anchor = GridBagConstraints.WEST;
@@ -447,6 +493,8 @@ public class BookManagerApp extends JFrame
 		detailsPanel.add(txtPrice, gbc);
 		gbc = (GridBagConstraints) gbc.clone();
 		detailsPanel.add(txtPublisher, gbc);
+		gbc = (GridBagConstraints) gbc.clone();
+		detailsPanel.add(txtIsbn, gbc);
 
 		gbc = new GridBagConstraints();
 		gbc.gridx = 0;
@@ -482,6 +530,18 @@ public class BookManagerApp extends JFrame
 		pnlControls.add(btnEdit, gbc);
 		gbc = (GridBagConstraints) gbc.clone();
 		pnlControls.add(btnRemove, gbc);
+	}
+
+	private void initListPane(JScrollPane listPane)
+	{
+		list = new JList<String>();
+
+		listPane.setViewportView(list);
+		listPane.setPreferredSize(new Dimension(250, 600));
+		listPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		list.setFont(new Font("Arial", Font.PLAIN, 10));
 	}
 
 	private void initActionListeners(JMenuItem mnIOpen, JMenuItem mnISave, JMenuItem mnIClose, JMenuItem mnIApplyFilter,
@@ -527,11 +587,59 @@ public class BookManagerApp extends JFrame
 			}
 		});
 
+		mnISortAsc.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				adjustMenuForSorting();
+				library.sortAscending();
+			}
+		});
+
+		mnISortDesc.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				adjustMenuForSorting();
+				library.sortDescending();
+			}
+		});
+
+		mnIUnSort.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				listSorted = false;
+				mnIUnSort.setEnabled(listSorted);
+				if(tempFilter == null) {
+					library.replaceBooks(tempSort);
+				} else {
+					removeFilter();
+				}
+			}
+		});
+
 		mnIAbout.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				aboutDialog();
+			}
+		});
+
+		btnToggle.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0)
+			{
+				String lblReportView = "Report View";
+				if(btnToggle.getText().equals(lblReportView)) {
+					btnToggle.setText("Details View");
+				} else {
+					btnToggle.setText(lblReportView);
+				}
+				detailsView.setVisible(!detailsView.isVisible());
+				reportView.setVisible(!reportView.isVisible());
+				updateTotals();
 			}
 		});
 
@@ -543,7 +651,7 @@ public class BookManagerApp extends JFrame
 				if(list.isSelectionEmpty()) {
 					index++;
 				}
-				addBook(index, BOOK_TYPES[0]);
+				addBook(index, BOOK_TYPES[0]); // Fictional by default
 			}
 		});
 
@@ -552,7 +660,6 @@ public class BookManagerApp extends JFrame
 			public void actionPerformed(ActionEvent e)
 			{
 				setFieldsEditable(true);
-				;
 			}
 		});
 
@@ -582,19 +689,12 @@ public class BookManagerApp extends JFrame
 		});
 	}
 
-	private void initListPane(JScrollPane listPane)
-	{
-		list = new JList<String>();
-
-		listPane.setViewportView(list);
-		listPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		list.setFont(new Font("Arial", Font.PLAIN, 10));
-	}
-
 	/* ADD/REMOVE BOOK */
 
+	/*
+	 * Adds a book at the specified index (either selected index or 0, moving
+	 * books up one index that follow). Takes BOOK_TYPES element as booktype.
+	 */
 	private Book addBook(int index, Object booktype)
 	{
 		Book book = null;
@@ -620,6 +720,9 @@ public class BookManagerApp extends JFrame
 		return book;
 	}
 
+	/*
+	 * Removes the currently selected book after checking with the user.
+	 */
 	private void removeBook()
 	{
 		int currentIndex = list.getSelectedIndex();
@@ -630,13 +733,14 @@ public class BookManagerApp extends JFrame
 			library.removeBook(library.getBook(currentIndex));
 			list.setSelectedIndex(currentIndex);
 		}
-		if(!library.isEmpty()) {
-			list.setSelectedIndex(currentIndex - 1);
-		}
 	}
 
-	/* Filter Functionality */
+	/* FILTER FUNCTIONALITY */
 
+	/*
+	 * Applies a filter by allowing the user to select a start and optional end
+	 * date.
+	 */
 	private void applyFilter()
 	{
 		JTextField txtStartDate = new JTextField();
@@ -654,13 +758,19 @@ public class BookManagerApp extends JFrame
 						SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
 						String start = formatter.format(startCal.getTime());
 						String end = formatter.format(endCal.getTime());
-						temp = library.getBooks();
+						List<Book> books = library.getBooksFilteredByDate(startCal, endCal);
 
-						library.replaceBooks(library.getBooksFilteredByDate(startCal, endCal));
-						lblFilterApplied.setText("Filter applied: " + start + " - " + end);
-						indicateFilter(true);
+						if(books != null) {
+							tempFilter = library.getBooks();
+							library.replaceBooks(books);
+							lblFilterApplied.setText("Filter applied: " + start + " - " + end);
+							indicateFilter(true);
+							updateTotals();
+						} else {
+							dateErrorEndBeforeStartDialog();
+						}
 					} else {
-						dateErrorDialog();
+						dateErrorFormatDialog();
 					}
 				}
 			}
@@ -669,12 +779,20 @@ public class BookManagerApp extends JFrame
 		}
 	}
 
+	/*
+	 * Removes a filter if it has been applied.
+	 */
 	private void removeFilter()
 	{
-		library.replaceBooks(temp);
+		library.replaceBooks(tempFilter);
 		indicateFilter(false);
+		updateTotals();
 	}
 
+	/*
+	 * Attempts to parse a given string into date format, showing a warning
+	 * dialog if input is incorrect.
+	 */
 	private GregorianCalendar getDateFromString(String strDate, boolean isEnd)
 	{
 		SimpleDateFormat all = new SimpleDateFormat("dd/MM/yyyy");
@@ -682,7 +800,6 @@ public class BookManagerApp extends JFrame
 		SimpleDateFormat year = new SimpleDateFormat("yyyy");
 		GregorianCalendar calendar = null;
 		Date date = null;
-		// TODO check if endDate is empty
 		try {
 			date = all.parse(strDate);
 		} catch(ParseException e) {
@@ -693,7 +810,7 @@ public class BookManagerApp extends JFrame
 					date = year.parse(strDate);
 				} catch(ParseException g) {
 					if(!isEnd) {
-						dateErrorDialog();
+						dateErrorFormatDialog();
 					}
 				}
 			}
@@ -709,6 +826,10 @@ public class BookManagerApp extends JFrame
 
 	/* SAVE OPEN CLOSE */
 
+	/*
+	 * Attempts to save the list of books within a library to a file, showing a
+	 * warning dialog if there is an I/O error.
+	 */
 	private void saveLibrary(LibraryReaderWriter lrw, String path, String fileName)
 	{
 		try {
@@ -718,6 +839,11 @@ public class BookManagerApp extends JFrame
 		}
 	}
 
+	/*
+	 * Attempts to open a .blf file. Shows a warning dialog if the incorrect
+	 * file extension is specified, the file has been deleted, or for an I/O
+	 * error.
+	 */
 	private void openLibrary(LibraryReaderWriter lrw, String path, String fileName)
 	{
 		List<Book> books = library.getBooks();
@@ -738,6 +864,9 @@ public class BookManagerApp extends JFrame
 		}
 	}
 
+	/*
+	 * Closes the current library by clearing the it's list.
+	 */
 	private void closeLibrary()
 	{
 		if(library.isEmpty()) {
@@ -758,10 +887,15 @@ public class BookManagerApp extends JFrame
 		}
 	}
 
+	/*
+	 * Open dialog for file opening. Adds extension if not typed. Checks 
+	 * overwrites. 
+	 */
 	private void selectFile(int dialogChoice)
 	{
 		FileNameExtensionFilter filter = new FileNameExtensionFilter("Book Library File", "blf");
-		JFileChooser fc = new JFileChooser(new File(".")); // Set dir to same as jar
+		JFileChooser fc = new JFileChooser(new File(".")); // Set dir to same as
+															// jar
 		fc.setFileFilter(filter);
 		fc.setAcceptAllFileFilterUsed(false);
 		int action = -1; // Non-value
@@ -779,7 +913,13 @@ public class BookManagerApp extends JFrame
 			String path = file.getAbsolutePath();
 			LibraryReaderWriter lrw = new LibraryReaderWriter(path);
 			if(dialogChoice == SAVE_DIALOG) {
-				saveLibrary(lrw, path, file.getName());
+				int choice = JOptionPane.NO_OPTION;
+				if(file.exists()) {
+					choice = checkOverwriteDialog();
+				}
+				if(choice == JOptionPane.YES_OPTION) {
+					saveLibrary(lrw, path, file.getName());
+				}
 			} else if(dialogChoice == OPEN_DIALOG) {
 				openLibrary(lrw, path, file.getName());
 			}
@@ -788,6 +928,9 @@ public class BookManagerApp extends JFrame
 
 	/* GUI ADJUSTMENTS */
 
+	/*
+	 * Turns various elements on or off when a filter is applied.
+	 */
 	private void indicateFilter(boolean filterApplied)
 	{
 		mnIApplyFilter.setEnabled(!filterApplied);
@@ -800,6 +943,10 @@ public class BookManagerApp extends JFrame
 		}
 	}
 
+	/*
+	 * Switches the visibility of all text fields and labels in the details
+	 * panel.
+	 */
 	private void setDetailsVisible(boolean isVisible)
 	{
 		for(Component component : detailsPanel.getComponents()) {
@@ -809,6 +956,10 @@ public class BookManagerApp extends JFrame
 		}
 	}
 
+	/*
+	 * Switches the editability of the text fields we want the user to have
+	 * access to.
+	 */
 	private void setFieldsEditable(boolean isEditable)
 	{
 		for(Component component : detailsPanel.getComponents()) {
@@ -819,20 +970,48 @@ public class BookManagerApp extends JFrame
 		}
 	}
 
+	/*
+	 * Called by toggle reports button action listener
+	 */
+	private void updateTotals()
+	{
+		valTotalBooks.setText(library.getBookCount() + "");
+		valTotalFict.setText(library.getFictionalCount() + "");
+		valTotalHist.setText(library.getHistoryCount() + "");
+		valTotalText.setText(library.getTextCount() + "");
+		valTotalVal.setText(new PriceConverter().convertForward(library.getTotalPrices()));
+	}
+	
+	/*
+	 * Enables unsort option and stores the library in its original condition 
+	 * if not already done.
+	 */
+	private void adjustMenuForSorting()
+	{	
+		if(!listSorted) {
+			tempSort = library.getBooks();
+		}
+		listSorted = true;
+		mnIUnSort.setEnabled(listSorted);
+	}
+
 	/* DIALOGS */
 
+	/*
+	 * Panel for selecting start and end dates from user input.
+	 */
 	private int getDateRange(JTextField txtStartDate, JTextField txtEndDate)
 	{
-		String message = "Please enter a start date and an end date. Leave the end date blank to search to the current day.";
+		String message = "Please enter a start date and an optional end date.";
 		Object[] options = new Object[] { "OK", "Cancel" };
 		JPanel mainPanel = new JPanel(new GridLayout(2, 0));
 		JPanel optionPanel = new JPanel(new GridLayout(0, 3));
 		JLabel dash = new JLabel("-");
 
 		dash.setHorizontalAlignment(SwingConstants.CENTER);
-		optionPanel.add(new JLabel("Start Date (dd/mm/yyyy):"));
+		optionPanel.add(new JLabel("Start Date (e.g. dd/mm/yyyy):"));
 		optionPanel.add(Box.createHorizontalStrut(5));
-		optionPanel.add(new JLabel("End Date (dd/mm/yyyy):"));
+		optionPanel.add(new JLabel("End Date (e.g. dd/mm/yyyy):"));
 		optionPanel.add(txtStartDate);
 		optionPanel.add(dash);
 		optionPanel.add(txtEndDate);
@@ -843,20 +1022,22 @@ public class BookManagerApp extends JFrame
 				JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
 	}
 
+	private int checkOverwriteDialog()
+	{
+		Object[] options = { "Yes", "No" };
+		return JOptionPane.showOptionDialog(null, "The file already exists. Do you wish to overwrite?", "Save", JOptionPane.DEFAULT_OPTION,
+				JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+	}
+	
 	private void aboutDialog()
 	{
 		JOptionPane.showMessageDialog(this, "Book Manager App Version " + VERSION);
 	}
 
-	// Convert the exception to a stack trace and display in a dialog
 	private void fatalException(Exception e)
 	{
-		StringBuilder sb = new StringBuilder(e.toString());
-		for(StackTraceElement ste : e.getStackTrace()) {
-			sb.append("\n\tat ");
-			sb.append(ste);
-		}
-		JOptionPane.showMessageDialog(this, sb.toString(), "Fatal Error", JOptionPane.ERROR_MESSAGE);
+		String message = "A fatal error has occurred! The program will now close.";
+		JOptionPane.showMessageDialog(this, message, "Fatal Error", JOptionPane.ERROR_MESSAGE);
 		System.exit(1);
 	}
 
@@ -866,111 +1047,96 @@ public class BookManagerApp extends JFrame
 				JOptionPane.INFORMATION_MESSAGE);
 	}
 
-	private void dateErrorDialog()
+	private void dateErrorFormatDialog()
 	{
-		String message = "Dates must be entered in dd/mm/yyyy, mm/yyyy or yyyy format.\nPlease try again.";
-		JOptionPane.showMessageDialog(this, message, "Date Error", JOptionPane.ERROR_MESSAGE);
+		dateErrorDialog("Dates must be entered in the valid format: dd/mm/yyyy, mm/yyyy or yyyy.");
+
 	}
 
-	protected void initDataBindings()
+	private void dateErrorEndBeforeStartDialog()
 	{
+		dateErrorDialog("If specified, the end-date must not be earlier than the start-date.");
+	}
+
+	private void dateErrorDialog(String message)
+	{
+		JOptionPane.showMessageDialog(this, message + "\nPlease try again", "Date Error", JOptionPane.ERROR_MESSAGE);
+	}
+	protected void initDataBindings() {
 		BeanProperty<Library, List<Book>> libraryBeanProperty = BeanProperty.create("books");
-		JListBinding<Book, Library, JList> jListBinding = SwingBindings.createJListBinding(UpdateStrategy.READ, library,
-				libraryBeanProperty, list);
+		JListBinding<Book, Library, JList> jListBinding = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty, list);
+		//
 		ELProperty<Book, Object> bookEvalutionProperty = ELProperty.create("${title} - ${author}");
 		jListBinding.setDetailBinding(bookEvalutionProperty);
+		//
 		jListBinding.bind();
-
+		//
+		JListBinding<Book, Library, JList> jListBinding_1 = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty, lstAuthors);
+		//
+		ELProperty<Book, Object> bookEvalutionProperty_1 = ELProperty.create("${author}");
+		jListBinding_1.setDetailBinding(bookEvalutionProperty_1);
+		//
+		jListBinding_1.bind();
+		//
+		JListBinding<Book, Library, JList> jListBinding_2 = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty, lstPublishers);
+		//
+		ELProperty<Book, Object> bookEvalutionProperty_2 = ELProperty.create("${publisher}");
+		jListBinding_2.setDetailBinding(bookEvalutionProperty_2);
+		//
+		jListBinding_2.bind();
+		//
+		JListBinding<Book, Library, JList> jListBinding_3 = SwingBindings.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty, lstPubDates);
+		//
+		ELProperty<Book, Object> bookEvalutionProperty_3 = ELProperty.create("${strDate}");
+		jListBinding_3.setDetailBinding(bookEvalutionProperty_3);
+		//
+		jListBinding_3.bind();
+		//
 		BeanProperty<JList, String> jListBeanProperty = BeanProperty.create("selectedElement.title");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, list, jListBeanProperty, txtTitle, jTextFieldBeanProperty);
+		AutoBinding<JList, String, JTextField, String> autoBinding = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty, txtTitle, jTextFieldBeanProperty);
 		autoBinding.bind();
-
+		//
 		BeanProperty<JList, String> jListBeanProperty_1 = BeanProperty.create("selectedElement.author");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_1 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_1 = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, list, jListBeanProperty_1, txtAuthor, jTextFieldBeanProperty_1);
+		AutoBinding<JList, String, JTextField, String> autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_1, txtAuthor, jTextFieldBeanProperty_1);
 		autoBinding_1.bind();
-
+		//
 		BeanProperty<JList, String> jListBeanProperty_2 = BeanProperty.create("selectedElement.publisher");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_2 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_2 = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, list, jListBeanProperty_2, txtPublisher, jTextFieldBeanProperty_2);
+		AutoBinding<JList, String, JTextField, String> autoBinding_2 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_2, txtPublisher, jTextFieldBeanProperty_2);
 		autoBinding_2.bind();
-
+		//
 		BeanProperty<JList, String> jListBeanProperty_3 = BeanProperty.create("selectedElement.type");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_3 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_3 = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, list, jListBeanProperty_3, txtType, jTextFieldBeanProperty_3);
+		AutoBinding<JList, String, JTextField, String> autoBinding_3 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_3, txtType, jTextFieldBeanProperty_3);
 		autoBinding_3.bind();
-
+		//
 		BeanProperty<JList, Integer> jListBeanProperty_4 = BeanProperty.create("selectedElement.priceInPence");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_4 = BeanProperty.create("text");
-		AutoBinding<JList, Integer, JTextField, String> autoBinding_4 = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, list, jListBeanProperty_4, txtPrice, jTextFieldBeanProperty_4);
+		AutoBinding<JList, Integer, JTextField, String> autoBinding_4 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_4, txtPrice, jTextFieldBeanProperty_4);
 		autoBinding_4.setConverter(new PriceConverter());
 		autoBinding_4.bind();
-
+		//
 		BeanProperty<JList, String> jListBeanProperty_5 = BeanProperty.create("selectedElement.infoLabel");
 		BeanProperty<JLabel, String> jLabelBeanProperty = BeanProperty.create("text");
-		AutoBinding<JList, String, JLabel, String> autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
-				list, jListBeanProperty_5, lblInfo, jLabelBeanProperty);
+		AutoBinding<JList, String, JLabel, String> autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_5, lblInfo, jLabelBeanProperty);
 		autoBinding_5.bind();
-
+		//
 		BeanProperty<JList, String> jListBeanProperty_6 = BeanProperty.create("selectedElement.infoValue");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_5 = BeanProperty.create("text");
-		AutoBinding<JList, String, JTextField, String> autoBinding_6 = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, list, jListBeanProperty_6, txtInfo, jTextFieldBeanProperty_5);
+		AutoBinding<JList, String, JTextField, String> autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_6, txtInfo, jTextFieldBeanProperty_5);
 		autoBinding_6.bind();
-
+		//
 		BeanProperty<JList, GregorianCalendar> jListBeanProperty_7 = BeanProperty.create("selectedElement.pubDate");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_6 = BeanProperty.create("text");
-		AutoBinding<JList, GregorianCalendar, JTextField, String> autoBinding_12 = Bindings.createAutoBinding(
-				UpdateStrategy.READ_WRITE, list, jListBeanProperty_7, txtPubDate, jTextFieldBeanProperty_6);
-		autoBinding_12.setConverter(new DateConverter(this));
+		AutoBinding<JList, GregorianCalendar, JTextField, String> autoBinding_12 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, list, jListBeanProperty_7, txtPubDate, jTextFieldBeanProperty_6);
+		autoBinding_12.setConverter(new DateConverter());
 		autoBinding_12.bind();
-
-		BeanProperty<Library, Integer> libraryBeanProperty_1 = BeanProperty.create("bookCount");
-		AutoBinding<Library, Integer, JLabel, String> autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ,
-				library, libraryBeanProperty_1, valTotalBooks, jLabelBeanProperty);
+		//
+		BeanProperty<JList, String> jListBeanProperty_8 = BeanProperty.create("selectedElement.isbn");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty_7 = BeanProperty.create("text");
+		AutoBinding<JList, String, JTextField, String> autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ, list, jListBeanProperty_8, txtIsbn, jTextFieldBeanProperty_7);
 		autoBinding_7.bind();
-
-		BeanProperty<Library, Integer> libraryBeanProperty_2 = BeanProperty.create("totalPrices");
-		AutoBinding<Library, Integer, JLabel, String> autoBinding_8 = Bindings.createAutoBinding(UpdateStrategy.READ,
-				library, libraryBeanProperty_2, valTotalVal, jLabelBeanProperty);
-		autoBinding_8.setConverter(new PriceConverter());
-		autoBinding_8.bind();
-
-		BeanProperty<Library, Integer> libraryBeanProperty_3 = BeanProperty.create("fictionalCount");
-		AutoBinding<Library, Integer, JLabel, String> autoBinding_9 = Bindings.createAutoBinding(UpdateStrategy.READ,
-				library, libraryBeanProperty_3, valTotalFict, jLabelBeanProperty);
-		autoBinding_9.bind();
-
-		BeanProperty<Library, Integer> libraryBeanProperty_4 = BeanProperty.create("historyCount");
-		AutoBinding<Library, Integer, JLabel, String> autoBinding_10 = Bindings.createAutoBinding(UpdateStrategy.READ,
-				library, libraryBeanProperty_4, valTotalHist, jLabelBeanProperty);
-		autoBinding_10.bind();
-
-		BeanProperty<Library, Integer> libraryBeanProperty_5 = BeanProperty.create("textCount");
-		AutoBinding<Library, Integer, JLabel, String> autoBinding_11 = Bindings.createAutoBinding(UpdateStrategy.READ,
-				library, libraryBeanProperty_5, valTotalText, jLabelBeanProperty);
-		autoBinding_11.bind();
-
-//		BeanProperty<Library, List<String>> libraryBeanProperty_6 = BeanProperty.create("authors");
-//		JListBinding<String, Library, JList> jListBinding_1 = SwingBindings.createJListBinding(UpdateStrategy.READ,
-//				library, libraryBeanProperty_6, lstAuthors);
-//		jListBinding_1.bind();
-//
-//		BeanProperty<Library, List<String>> libraryBeanProperty_7 = BeanProperty.create("publishers");
-//		JListBinding<String, Library, JList> jListBinding_2 = SwingBindings.createJListBinding(UpdateStrategy.READ,
-//				library, libraryBeanProperty_7, lstPublishers);
-//		jListBinding_2.bind();
-//
-//		BeanProperty<Library, List<GregorianCalendar>> libraryBeanProperty_8 = BeanProperty.create("dates");
-//		JListBinding<GregorianCalendar, Library, JList> jListBinding_3 = SwingBindings
-//				.createJListBinding(UpdateStrategy.READ, library, libraryBeanProperty_8, lstPubDates);
-//		jListBinding_3.setConverter(new ListDateConverter());
-//		jListBinding_3.bind();
 	}
 }

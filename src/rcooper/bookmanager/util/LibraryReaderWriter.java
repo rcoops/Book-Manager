@@ -1,8 +1,8 @@
-package rcooper.bookmanager;
+package rcooper.bookmanager.util;
 
 import java.io.BufferedInputStream;
-
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -13,6 +13,8 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.List;
+
+import javax.swing.JOptionPane;
 
 import rcooper.bookmanager.model.Book;
 
@@ -51,24 +53,24 @@ public class LibraryReaderWriter
 	 */
 	public void writeObjects(List<Book> books) throws IOException
 	{
-		OutputStream file = null;
-		OutputStream buffer = null;
-		ObjectOutput output = null;
+		OutputStream fileOutput = null;
+		OutputStream bufferedOutput = null;
+		ObjectOutput objectOutput = null;
 		// Better to catch in library after opening/closing attempted
 		try {
-			file = new FileOutputStream(fileName);
-			buffer = new BufferedOutputStream(file);
-			output = new ObjectOutputStream(buffer);
-			output.writeObject(books);
+			fileOutput = new FileOutputStream(fileName);
+			bufferedOutput = new BufferedOutputStream(fileOutput);
+			objectOutput = new ObjectOutputStream(bufferedOutput);
+			objectOutput.writeObject(books);
 		} finally {
-			if(output != null) {
-				output.close();
+			if(objectOutput != null) {
+				objectOutput.close();
 			}
-			if(buffer != null) {
-				buffer.close();
+			if(bufferedOutput != null) {
+				bufferedOutput.close();
 			}
-			if(file != null) {
-				file.close();
+			if(fileOutput != null) {
+				fileOutput.close();
 			}
 		}
 	}
@@ -83,25 +85,25 @@ public class LibraryReaderWriter
 	 */
 	public List<Book> readObjects() throws IOException
 	{
-		InputStream file = null;
-		InputStream buffer = null;
-		ObjectInput input = null;
+		InputStream fileInput = null;
+		InputStream bufferedInput = null;
+		ObjectInput objectInput = null;
 		try {
-			file = new FileInputStream(fileName);
-			buffer = new BufferedInputStream(file);
-			input = new ObjectInputStream(buffer);
-			return (List<Book>) input.readObject();
+			fileInput = new FileInputStream(fileName);
+			bufferedInput = new BufferedInputStream(fileInput);
+			objectInput = new ObjectInputStream(bufferedInput);
+			return (List<Book>) objectInput.readObject();
 		} catch(ClassNotFoundException | ClassCastException e) {
 			return null; // Handle this in manager
 		} finally {
-			if(input != null) {
-				input.close();
+			if(objectInput != null) {
+				objectInput.close();
 			}
-			if(buffer != null) {
-				buffer.close();
+			if(bufferedInput != null) {
+				bufferedInput.close();
 			}
-			if(file != null) {
-				file.close();
+			if(fileInput != null) {
+				fileInput.close();
 			}
 		}
 	}
