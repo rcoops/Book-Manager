@@ -313,7 +313,7 @@ public class BookManagerApp extends JFrame
 		gbc_valTotalbooks.anchor = GridBagConstraints.LINE_START;
 		gbc_valTotalbooks.weighty = 0.2;
 		gbc_valTotalbooks.weightx = 0.2;
-		gbc_valTotalbooks.insets = new Insets(0, 0, 5, 0);
+		gbc_valTotalbooks.insets = new Insets(0, 0, 5, 35);
 		gbc_valTotalbooks.gridx = 4;
 		gbc_valTotalbooks.gridy = 0;
 		reportView.add(valTotalBooks, gbc_valTotalbooks);
@@ -328,11 +328,11 @@ public class BookManagerApp extends JFrame
 		reportView.add(lblTotalFict, gbc_lblTotalFict);
 
 		GridBagConstraints gbc_valTotalFict = new GridBagConstraints();
+		gbc_valTotalFict.insets = new Insets(0, 0, 5, 35);
 		gbc_valTotalFict.fill = GridBagConstraints.HORIZONTAL;
 		gbc_valTotalFict.anchor = GridBagConstraints.LINE_START;
 		gbc_valTotalFict.weightx = 0.2;
 		gbc_valTotalFict.weighty = 0.2;
-		gbc_valTotalFict.insets = new Insets(0, 0, 5, 0);
 		gbc_valTotalFict.gridx = 4;
 		gbc_valTotalFict.gridy = 1;
 		reportView.add(valTotalFict, gbc_valTotalFict);
@@ -347,11 +347,11 @@ public class BookManagerApp extends JFrame
 		reportView.add(lblTotalHistory, gbc_lblTotalHistory);
 
 		GridBagConstraints gbc_valTotalHist = new GridBagConstraints();
+		gbc_valTotalHist.insets = new Insets(0, 0, 5, 35);
 		gbc_valTotalHist.fill = GridBagConstraints.HORIZONTAL;
 		gbc_valTotalHist.anchor = GridBagConstraints.LINE_START;
 		gbc_valTotalHist.weighty = 0.2;
 		gbc_valTotalHist.weightx = 0.2;
-		gbc_valTotalHist.insets = new Insets(0, 0, 5, 0);
 		gbc_valTotalHist.gridx = 4;
 		gbc_valTotalHist.gridy = 2;
 		reportView.add(valTotalHist, gbc_valTotalHist);
@@ -366,11 +366,11 @@ public class BookManagerApp extends JFrame
 		reportView.add(lblTotalText, gbc_lblTotalText);
 
 		GridBagConstraints gbc_valTotalText = new GridBagConstraints();
+		gbc_valTotalText.insets = new Insets(0, 0, 5, 35);
 		gbc_valTotalText.anchor = GridBagConstraints.LINE_START;
 		gbc_valTotalText.fill = GridBagConstraints.HORIZONTAL;
 		gbc_valTotalText.weighty = 0.2;
 		gbc_valTotalText.weightx = 0.2;
-		gbc_valTotalText.insets = new Insets(0, 0, 5, 0);
 		gbc_valTotalText.gridx = 4;
 		gbc_valTotalText.gridy = 3;
 		reportView.add(valTotalText, gbc_valTotalText);
@@ -385,6 +385,7 @@ public class BookManagerApp extends JFrame
 		reportView.add(lblTotalValue, gbc_lblTotalValue);
 
 		GridBagConstraints gbc_valTotalVal = new GridBagConstraints();
+		gbc_valTotalVal.insets = new Insets(0, 0, 0, 35);
 		gbc_valTotalVal.anchor = GridBagConstraints.LINE_START;
 		gbc_valTotalVal.fill = GridBagConstraints.HORIZONTAL;
 		gbc_valTotalVal.weighty = 0.2;
